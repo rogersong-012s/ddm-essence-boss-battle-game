@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#8bcfe8">
+  <meta name="description" content="在夏日草地上放下可愛黑色素，合成淡化，DDM 緊急救援！">
+  <title>Melanin Merge — DDM 淡化救援</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+  <script defer src="game.js"></script>
+</head>
+<body>
+  <main class="page-shell">
+    <section class="game-wrapper" aria-label="Melanin Merge 遊戲">
+      <div class="summer-scene" aria-hidden="true">
+        <div class="summer-sun"><span></span></div>
+        <div class="summer-cloud cloud-one"><i></i></div>
+        <div class="summer-cloud cloud-two"><i></i></div>
+        <div class="summer-cloud cloud-three"><i></i></div>
+        <div class="meadow-hill"></div>
+        <div class="meadow-flower flower-one"><i></i><b></b></div>
+        <div class="meadow-flower flower-two"><i></i><b></b></div>
+        <div class="meadow-flower flower-three"><i></i><b></b></div>
+        <div class="meadow-flower flower-four"><i></i><b></b></div>
+      </div>
+      <canvas id="game-canvas" aria-label="黑色素合成遊戲場，移動游標選擇位置，點擊放下黑色素"></canvas>
+
+      <header class="game-header">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true"><span>✦</span><i></i></div>
+          <div>
+            <p class="eyebrow">DDM SKIN RESCUE GAME</p>
+            <h1>MELANIN <span>MERGE</span></h1>
+          </div>
+        </div>
+        <div class="header-note"><span class="pulse-dot"></span> 合成・淡化・救援</div>
+        <button class="restart-quiet" id="restart-top" type="button" title="重新開始" aria-label="重新開始">↻</button>
+      </header>
+
+      <aside class="score-panel glass-panel" aria-label="遊戲分數">
+        <div class="panel-kicker"><span class="tiny-sun">✦</span> YOUR SCORE</div>
+        <div class="score-number" id="score-value">0</div>
+        <div class="score-divider"></div>
+        <div class="record-row"><span>BEST</span><strong id="best-value">0</strong></div>
+        <div class="record-row"><span>最高合成</span><strong id="highest-value">LV 1</strong></div>
+      </aside>
+
+      <aside class="recipe-panel glass-panel" aria-label="九階合成旅程">
+        <div class="recipe-title"><span>你的合成旅程</span><span class="recipe-sparkle">✦</span></div>
+        <div class="recipe-track" role="img" aria-label="從 Lv 1 逐階合成至 Lv 9">
+          <span class="recipe-bubble recipe-lv1">1</span>
+          <span class="recipe-bubble recipe-lv2">2</span>
+          <span class="recipe-bubble recipe-lv3">3</span>
+          <span class="recipe-bubble recipe-lv4">4</span>
+          <span class="recipe-bubble recipe-lv5">5</span>
+          <span class="recipe-bubble recipe-lv6">6</span>
+          <span class="recipe-bubble recipe-lv7">7</span>
+          <span class="recipe-bubble recipe-lv8">8</span>
+          <span class="recipe-bubble recipe-lv9">9</span>
+        </div>
+        <p>兩顆相同等級相碰就會合成<br>一路挑戰到 Lv 9</p>
+      </aside>
+
+      <aside class="next-panel glass-panel" aria-label="下一顆黑色素">
+        <div class="panel-kicker">NEXT <span class="next-label">下一顆</span></div>
+        <div class="next-preview-wrap" id="next-preview" data-level="1" aria-hidden="true">
+          <canvas class="next-preview-canvas" id="next-preview-canvas"></canvas>
+        </div>
+        <div class="next-level" id="next-level">LV 1</div>
+      </aside>
+
+      <div class="mode-banner" id="mode-banner" role="status" aria-live="polite" hidden>
+        <span class="mode-cross">✦</span><span>選擇一個黑色素進行淡化</span><button id="cancel-ddm" type="button" aria-label="取消 DDM 選擇">×</button>
+      </div>
+
+      <aside class="rescue-panel" aria-label="DDM 淡化救援">
+        <button class="ddm-button" id="ddm-button" type="button" aria-pressed="false">
+          <span class="ddm-icon" aria-hidden="true">
+            <svg viewBox="0 0 52 64" role="img"><path d="M19 4h14v9l8 8v32a6 6 0 0 1-6 6H17a6 6 0 0 1-6-6V21l8-8z"/><path d="M19 13h14M11 27h30"/><path class="bottle-cross" d="M26 33v13M19.5 39.5h13"/><path class="bottle-drop" d="M16 51c3-4 7-4 10 0"/></svg>
+          </span>
+          <span class="ddm-copy"><strong>DDM 救援</strong><small>緊急淡化工具</small></span>
+          <span class="ddm-count" id="ddm-count">× 3</span>
+          <span class="ddm-shine" aria-hidden="true"></span>
+        </button>
+        <p class="rescue-hint" id="rescue-hint">點擊後選擇場上的黑色素</p>
+      </aside>
+
+      <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+      <div class="combo-pop" id="combo-pop" aria-live="polite" hidden></div>
+
+      <div class="control-hint" aria-hidden="true">
+        <span class="mouse-glyph"><i></i></span><span>移動選位置</span><b>·</b><span>點擊放下</span>
+        <span class="hint-separator"></span><span class="touch-glyph">◎</span><span>觸控也可以玩</span>
+      </div>
+
+      <section class="game-over" id="game-over" hidden aria-labelledby="game-over-title" role="dialog" aria-modal="true">
+        <div class="game-over-card">
+          <div class="over-badge" aria-hidden="true">☁</div>
+          <p class="eyebrow">A LITTLE RESET?</p>
+          <h2 id="game-over-title">堆得有點高了！</h2>
+          <p class="over-copy">休息一下，再來挑戰最高等級吧。</p>
+          <div class="over-stats"><div><span>本次分數</span><strong id="final-score">0</strong></div><div><span>最高合成</span><strong id="final-highest">LV 1</strong></div></div>
+          <button class="play-again" id="restart-button" type="button"><span>↻</span> 重新開始</button>
+        </div>
+      </section>
+
+      <div class="debug-chip" id="debug-chip" hidden>DEV · 1–8 等級　D 補充 DDM　R 重開</div>
+    </section>
+  </main>
+</body>
+</html>
