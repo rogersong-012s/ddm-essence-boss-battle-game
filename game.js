@@ -5,15 +5,33 @@
   // Tunable game configuration
   // ---------------------------
   const DEBUG = true;
-  const LOGICAL_WIDTH = 1600;
-  const LOGICAL_HEIGHT = 900;
-  const PLAYFIELD_WIDTH = 460;
-  const PLAYFIELD_HEIGHT = 630;
+  const REFERENCE_WIDTH = 1600;
+  const REFERENCE_HEIGHT = 900;
+  const DANGER_ZONE_DIAMETER_MULTIPLIER = 2.05;
+  // All gameplay geometry uses one normalized 1600 × 900 reference frame.
+  // The wrapper is always displayed at 16:9, so CSS scales this reference space uniformly.
+  const LAYOUT = Object.freeze({
+    referenceFrame: Object.freeze({ width: REFERENCE_WIDTH, height: REFERENCE_HEIGHT }),
+    playfield: Object.freeze({ x: 570 / REFERENCE_WIDTH, y: 156 / REFERENCE_HEIGHT, width: 460 / REFERENCE_WIDTH, height: 630 / REFERENCE_HEIGHT }),
+    dropOffset: 42 / 630,
+    bowlPadding: Object.freeze({ side: 27 / 460, top: 21 / 630, bottom: 24 / 630 }),
+    walls: Object.freeze({ thickness: 26 / 460, extension: 130 / 630 }),
+    ballDiameterRatios: Object.freeze([0, 36 / 460, 52 / 460, 72 / 460, 96 / 460, 124 / 460, 158 / 460, 198 / 460, 244 / 460, 298 / 460]),
+    debugSpawnY: 610 / REFERENCE_HEIGHT
+  });
+  const LOGICAL_WIDTH = LAYOUT.referenceFrame.width;
+  const LOGICAL_HEIGHT = LAYOUT.referenceFrame.height;
+  const PLAYFIELD_WIDTH = Math.round(LOGICAL_WIDTH * LAYOUT.playfield.width);
+  const PLAYFIELD_HEIGHT = Math.round(LOGICAL_HEIGHT * LAYOUT.playfield.height);
+
+  function ballDiameterForLevel(level) {
+    return Math.round(PLAYFIELD_WIDTH * LAYOUT.ballDiameterRatios[level]);
+  }
   const MAX_LEVEL = 9;
+  const DANGER_REFERENCE_LEVEL = 8;
   const MAX_DDM = 3;
   const INITIAL_DDM = 3;
   const GAME_OVER_DELAY = 2000;
-  const DANGER_LINE_OFFSET = 175;
   const DROP_COOLDOWN = 520;
   const PHYSICS_GRAVITY = 1;
   const PHYSICS_GRAVITY_SCALE = 0.00105;
@@ -27,15 +45,15 @@
   const SCORE_TABLE = { 1: 5, 2: 10, 3: 20, 4: 40, 5: 80, 6: 160, 7: 320, 8: 640 };
   const WARM_LEVELS = [
     null,
-    { diameter: 36, color: '#FCEEE8', highlight: '#FFF9F5', shadow: '#EBDAD7', eyeColor: '#FFFCF9', eyeOutlineColor: '#DFA6A2', pupilColor: '#764B53', cheekColor: 'rgba(220,132,141,.34)', labelColor: '#875B61', badgeFill: 'rgba(255,250,247,.72)', faceColor: '#875B61', face: 'calm', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .2, labelFont: 9 },
-    { diameter: 52, color: '#F9E1D7', highlight: '#FFF5EF', shadow: '#EBCBC1', eyeColor: '#FFFCF8', eyeOutlineColor: '#D99A97', pupilColor: '#74474F', cheekColor: 'rgba(220,125,138,.34)', labelColor: '#8C565B', badgeFill: 'rgba(255,249,245,.68)', faceColor: '#8C565B', face: 'smile', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .22, labelFont: 12 },
-    { diameter: 72, color: '#F6D1C2', highlight: '#FFEFE8', shadow: '#E7B6AA', eyeColor: '#FFFBF7', eyeOutlineColor: '#D48686', pupilColor: '#75434B', cheekColor: 'rgba(217,113,132,.34)', labelColor: '#945157', badgeFill: 'rgba(255,249,245,.62)', faceColor: '#945157', face: 'happy', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .24, labelFont: 13 },
-    { diameter: 96, color: '#F2C0AF', highlight: '#FFE8E0', shadow: '#E0A698', eyeColor: '#FFF9F5', eyeOutlineColor: '#CB7E82', pupilColor: '#743F49', cheekColor: 'rgba(215,105,127,.33)', labelColor: '#94484F', badgeFill: 'rgba(255,248,244,.58)', faceColor: '#94484F', face: 'wink', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .22, labelFont: 14 },
-    { diameter: 124, color: '#EEAE9B', highlight: '#FFE0D6', shadow: '#D78E84', eyeColor: '#FFF9F4', eyeOutlineColor: '#C87077', pupilColor: '#733B46', cheekColor: 'rgba(211,99,123,.32)', labelColor: '#8A454D', badgeFill: 'rgba(255,248,243,.56)', faceColor: '#8A454D', face: 'proud', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .25, labelFont: 16 },
-    { diameter: 158, color: '#E99988', highlight: '#FFD7CE', shadow: '#D27A75', eyeColor: '#FFF9F5', eyeOutlineColor: '#C96C72', pupilColor: '#703A45', cheekColor: 'rgba(219,112,132,.32)', labelColor: '#80434B', badgeFill: 'rgba(255,247,243,.5)', faceColor: '#80434B', face: 'mischief', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .23, labelFont: 18 },
-    { diameter: 198, color: '#E28379', highlight: '#FFC9C3', shadow: '#C96769', eyeColor: '#FFF8F4', eyeOutlineColor: '#F0B0AB', pupilColor: '#713940', cheekColor: 'rgba(255,175,179,.34)', labelColor: '#FFF8F4', badgeFill: 'rgba(132,48,55,.44)', faceColor: '#FFF5F0', face: 'confident', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .22, labelFont: 20 },
-    { diameter: 244, color: '#D96E69', highlight: '#F7B4AF', shadow: '#BE595F', eyeColor: '#FFF8F3', eyeOutlineColor: '#EBA7A4', pupilColor: '#6F3741', cheekColor: 'rgba(255,185,187,.32)', labelColor: '#FFF8F4', badgeFill: 'rgba(111,41,51,.4)', faceColor: '#FFF3EE', face: 'gentle', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .2, labelFont: 22 },
-    { diameter: 298, color: '#CC5C5D', highlight: '#EF9997', shadow: '#AF4C58', eyeColor: '#FFF8F4', eyeOutlineColor: '#E59A9B', pupilColor: '#68323D', cheekColor: 'rgba(255,190,190,.3)', labelColor: '#FFF8F4', badgeFill: 'rgba(95,32,45,.4)', faceColor: '#FFF3EF', face: 'boss', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .23, labelFont: 24 }
+    { diameter: ballDiameterForLevel(1), color: '#FCEEE8', highlight: '#FFF9F5', shadow: '#EBDAD7', eyeColor: '#FFFCF9', eyeOutlineColor: '#DFA6A2', pupilColor: '#764B53', cheekColor: 'rgba(220,132,141,.34)', labelColor: '#875B61', badgeFill: 'rgba(255,250,247,.72)', faceColor: '#875B61', face: 'calm', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .2, labelFont: 9 },
+    { diameter: ballDiameterForLevel(2), color: '#F9E1D7', highlight: '#FFF5EF', shadow: '#EBCBC1', eyeColor: '#FFFCF8', eyeOutlineColor: '#D99A97', pupilColor: '#74474F', cheekColor: 'rgba(220,125,138,.34)', labelColor: '#8C565B', badgeFill: 'rgba(255,249,245,.68)', faceColor: '#8C565B', face: 'smile', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .22, labelFont: 12 },
+    { diameter: ballDiameterForLevel(3), color: '#F6D1C2', highlight: '#FFEFE8', shadow: '#E7B6AA', eyeColor: '#FFFBF7', eyeOutlineColor: '#D48686', pupilColor: '#75434B', cheekColor: 'rgba(217,113,132,.34)', labelColor: '#945157', badgeFill: 'rgba(255,249,245,.62)', faceColor: '#945157', face: 'happy', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .24, labelFont: 13 },
+    { diameter: ballDiameterForLevel(4), color: '#F2C0AF', highlight: '#FFE8E0', shadow: '#E0A698', eyeColor: '#FFF9F5', eyeOutlineColor: '#CB7E82', pupilColor: '#743F49', cheekColor: 'rgba(215,105,127,.33)', labelColor: '#94484F', badgeFill: 'rgba(255,248,244,.58)', faceColor: '#94484F', face: 'wink', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .22, labelFont: 14 },
+    { diameter: ballDiameterForLevel(5), color: '#EEAE9B', highlight: '#FFE0D6', shadow: '#D78E84', eyeColor: '#FFF9F4', eyeOutlineColor: '#C87077', pupilColor: '#733B46', cheekColor: 'rgba(211,99,123,.32)', labelColor: '#8A454D', badgeFill: 'rgba(255,248,243,.56)', faceColor: '#8A454D', face: 'proud', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .25, labelFont: 16 },
+    { diameter: ballDiameterForLevel(6), color: '#E99988', highlight: '#FFD7CE', shadow: '#D27A75', eyeColor: '#FFF9F5', eyeOutlineColor: '#C96C72', pupilColor: '#703A45', cheekColor: 'rgba(219,112,132,.32)', labelColor: '#80434B', badgeFill: 'rgba(255,247,243,.5)', faceColor: '#80434B', face: 'mischief', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .23, labelFont: 18 },
+    { diameter: ballDiameterForLevel(7), color: '#E28379', highlight: '#FFC9C3', shadow: '#C96769', eyeColor: '#FFF8F4', eyeOutlineColor: '#F0B0AB', pupilColor: '#713940', cheekColor: 'rgba(255,175,179,.34)', labelColor: '#FFF8F4', badgeFill: 'rgba(132,48,55,.44)', faceColor: '#FFF5F0', face: 'confident', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .22, labelFont: 20 },
+    { diameter: ballDiameterForLevel(8), color: '#D96E69', highlight: '#F7B4AF', shadow: '#BE595F', eyeColor: '#FFF8F3', eyeOutlineColor: '#EBA7A4', pupilColor: '#6F3741', cheekColor: 'rgba(255,185,187,.32)', labelColor: '#FFF8F4', badgeFill: 'rgba(111,41,51,.4)', faceColor: '#FFF3EE', face: 'gentle', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .2, labelFont: 22 },
+    { diameter: ballDiameterForLevel(9), color: '#CC5C5D', highlight: '#EF9997', shadow: '#AF4C58', eyeColor: '#FFF8F4', eyeOutlineColor: '#E59A9B', pupilColor: '#68323D', cheekColor: 'rgba(255,190,190,.3)', labelColor: '#FFF8F4', badgeFill: 'rgba(95,32,45,.4)', faceColor: '#FFF3EF', face: 'boss', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .23, labelFont: 24 }
   ];
 
   const RAINBOW_COLORS = [
@@ -64,21 +82,26 @@
   let currentThemeKey = 'warm';
   let MELANIN_LEVELS = BALL_THEMES[currentThemeKey].levels;
 
-  const GAME_LEFT = (LOGICAL_WIDTH - PLAYFIELD_WIDTH) / 2;
+  const GAME_LEFT = Math.round(LOGICAL_WIDTH * LAYOUT.playfield.x);
   const GAME_RIGHT = GAME_LEFT + PLAYFIELD_WIDTH;
   const PLAYFIELD_CENTER_X = (GAME_LEFT + GAME_RIGHT) / 2;
-  const GAME_TOP = 156;
+  const GAME_TOP = Math.round(LOGICAL_HEIGHT * LAYOUT.playfield.y);
   const GAME_FLOOR = GAME_TOP + PLAYFIELD_HEIGHT;
-  const DANGER_LINE_Y = GAME_TOP + DANGER_LINE_OFFSET;
-  const DROP_Y = GAME_TOP + 42;
-  const WALL_THICKNESS = 26;
-  const WALL_EXTENSION = 130;
-  const BOWL_SIDE_PADDING = 27;
-  const BOWL_TOP_PADDING = 21;
-  const BOWL_BOTTOM_PADDING = 24;
+  const DROP_Y = GAME_TOP + Math.round(PLAYFIELD_HEIGHT * LAYOUT.dropOffset);
+  const WALL_THICKNESS = Math.round(PLAYFIELD_WIDTH * LAYOUT.walls.thickness);
+  const WALL_EXTENSION = Math.round(PLAYFIELD_HEIGHT * LAYOUT.walls.extension);
+  const BOWL_SIDE_PADDING = Math.round(PLAYFIELD_WIDTH * LAYOUT.bowlPadding.side);
+  const BOWL_TOP_PADDING = Math.round(PLAYFIELD_HEIGHT * LAYOUT.bowlPadding.top);
+  const BOWL_BOTTOM_PADDING = Math.round(PLAYFIELD_HEIGHT * LAYOUT.bowlPadding.bottom);
+  const PLAYFIELD_BOTTOM = GAME_FLOOR + BOWL_BOTTOM_PADDING;
+  let lv8Radius = MELANIN_LEVELS[DANGER_REFERENCE_LEVEL].diameter / 2;
+  let lv8Diameter = lv8Radius * 2;
+  let dangerZoneHeight = lv8Diameter * DANGER_ZONE_DIAMETER_MULTIPLIER;
+  let DANGER_LINE_Y = PLAYFIELD_BOTTOM - dangerZoneHeight;
+  let lastDangerDebugKey = '';
   const MAX_FRAME_DELTA = 34;
   const MAX_CANVAS_SCALE = 2.5;
-  const DANGER_LABEL_FONT_SIZE = 14;
+  const DANGER_LABEL_FONT_SIZE = LOGICAL_WIDTH * (14 / REFERENCE_WIDTH);
   const BEST_KEY = 'melanin-merge-best-v1';
 
   const canvas = document.querySelector('#game-canvas');
@@ -127,6 +150,9 @@
   let gameTime = 0;
   let physicsAccumulator = 0;
   let isPointerInsidePlayfield = false;
+  let pointerDownStartedInsidePlayfield = false;
+  let activePointerId = null;
+  let activePointerType = 'mouse';
   let lastValidDropX = PLAYFIELD_CENTER_X;
   let currentDropX = PLAYFIELD_CENTER_X;
   let dangerSince = null;
@@ -172,6 +198,12 @@
   canvas.addEventListener('pointermove', handlePointerMove);
   canvas.addEventListener('pointerleave', handlePointerLeave);
   canvas.addEventListener('pointerdown', handlePointerDown);
+  window.addEventListener('pointerup', handlePointerUp);
+  window.addEventListener('pointercancel', handlePointerCancel);
+  window.addEventListener('blur', () => {
+    resetPointerGesture();
+    isPointerInsidePlayfield = false;
+  });
   ddmButton.addEventListener('click', toggleDDMMode);
   document.querySelector('#cancel-ddm').addEventListener('click', exitDDMMode);
   document.querySelector('#restart-button').addEventListener('click', restartGame);
@@ -267,7 +299,7 @@
       selector.className = 'theme-dot';
       selector.dataset.themeKey = themeKey;
       selector.setAttribute('aria-label', '切換至' + theme.name);
-      selector.title = theme.name;
+      selector.dataset.themeName = theme.name;
       const swatch = document.createElement('span');
       swatch.className = 'theme-dot-swatch';
       swatch.style.setProperty('--theme-swatch', theme.swatch);
@@ -294,6 +326,7 @@
     if (!BALL_THEMES[themeKey] || themeKey === currentThemeKey) return;
     currentThemeKey = themeKey;
     MELANIN_LEVELS = BALL_THEMES[currentThemeKey].levels;
+    updateDangerLineGeometry(getUIScale());
     updateThemeSelector();
     updateJourneyUI();
     draw();
@@ -328,7 +361,63 @@
     nextPreviewEl.setAttribute('aria-label', `下一顆：Lv ${nextLevel}`);
   }
 
+  function getUIScale(frameWidth = wrapper.clientWidth) {
+    return frameWidth / REFERENCE_WIDTH;
+  }
+
+  function updateDangerLineGeometry(uiScale) {
+    // Drawing and Game Over use the same logical Y value; resize only changes its rendered scale.
+    lv8Radius = MELANIN_LEVELS[DANGER_REFERENCE_LEVEL].diameter / 2;
+    lv8Diameter = lv8Radius * 2;
+    dangerZoneHeight = lv8Diameter * DANGER_ZONE_DIAMETER_MULTIPLIER;
+    DANGER_LINE_Y = PLAYFIELD_BOTTOM - dangerZoneHeight;
+    const debugKey = String(uiScale) + ':' + lv8Diameter;
+    if (DEBUG && debugKey !== lastDangerDebugKey) {
+      console.debug('[Melanin Merge] danger line geometry', {
+        uiScale, playfieldHeight: PLAYFIELD_HEIGHT, playfieldBottom: PLAYFIELD_BOTTOM, lv8Radius,
+        lv8Diameter, dangerZoneHeight, dangerLineY: DANGER_LINE_Y
+      });
+      lastDangerDebugKey = debugKey;
+    }
+  }
+
+  function getLayoutMetrics() {
+    const frameRect = wrapper.getBoundingClientRect();
+    const canvasRect = canvas.getBoundingClientRect();
+    const scaleX = canvasRect.width / LOGICAL_WIDTH;
+    const scaleY = canvasRect.height / LOGICAL_HEIGHT;
+    const playfieldRect = {
+      left: canvasRect.left + GAME_LEFT * scaleX,
+      top: canvasRect.top + (GAME_TOP - BOWL_TOP_PADDING) * scaleY,
+      right: canvasRect.left + GAME_RIGHT * scaleX,
+      bottom: canvasRect.top + PLAYFIELD_BOTTOM * scaleY
+    };
+    playfieldRect.width = playfieldRect.right - playfieldRect.left;
+    playfieldRect.height = playfieldRect.bottom - playfieldRect.top;
+    return {
+      frameRect,
+      frameWidth: frameRect.width,
+      frameHeight: frameRect.height,
+      canvasRect,
+      scaleX,
+      scaleY,
+      playfieldRect
+    };
+  }
+
+  function isPointInsidePlayfield(clientX, clientY) {
+    const { playfieldRect } = getLayoutMetrics();
+    return clientX >= playfieldRect.left
+      && clientX <= playfieldRect.right
+      && clientY >= playfieldRect.top
+      && clientY <= playfieldRect.bottom;
+  }
+
   function handlePointerMove(event) {
+    if (!isPointInsidePlayfield(event.clientX, event.clientY)) {
+      isPointerInsidePlayfield = false;
+      return;
+    }
     updateDropPreviewPosition(toLogicalPoint(event));
   }
 
@@ -337,34 +426,64 @@
   }
 
   function handlePointerDown(event) {
-    if (gameOver) return;
+    if (gameOver || activePointerId != null || event.button !== 0) return;
+    activePointerId = event.pointerId;
+    activePointerType = event.pointerType || 'mouse';
+    pointerDownStartedInsidePlayfield = isPointInsidePlayfield(event.clientX, event.clientY);
+    if (!pointerDownStartedInsidePlayfield) {
+      isPointerInsidePlayfield = false;
+      return;
+    }
+    event.preventDefault();
+    updateDropPreviewPosition(toLogicalPoint(event));
+  }
+
+  function handlePointerUp(event) {
+    if (activePointerId !== event.pointerId) return;
+    const startedInside = pointerDownStartedInsidePlayfield;
+    const endedInside = isPointInsidePlayfield(event.clientX, event.clientY);
+    const pointerType = activePointerType;
+    resetPointerGesture();
+    if (!endedInside) isPointerInsidePlayfield = false;
+    if (!startedInside || !endedInside || gameOver) return;
+
     event.preventDefault();
     const point = toLogicalPoint(event);
     updateDropPreviewPosition(point);
     if (ddmMode) {
       const target = findMelaninAt(point.x, point.y);
-      if (!target) return;
-      useDDM(target);
+      if (target) useDDM(target);
       return;
     }
-    dropMelanin(currentDropX, event.pointerType);
+    dropMelanin(currentDropX, pointerType);
+  }
+
+  function handlePointerCancel(event) {
+    if (activePointerId != null && event.pointerId !== activePointerId) return;
+    resetPointerGesture();
+    isPointerInsidePlayfield = false;
+  }
+
+  function resetPointerGesture() {
+    activePointerId = null;
+    activePointerType = 'mouse';
+    pointerDownStartedInsidePlayfield = false;
   }
 
   function updateDropPreviewPosition(point) {
-    const insidePlayfield = point.x >= GAME_LEFT && point.x <= GAME_RIGHT
-      && point.y >= GAME_TOP - BOWL_TOP_PADDING && point.y <= GAME_FLOOR + BOWL_BOTTOM_PADDING;
-    isPointerInsidePlayfield = insidePlayfield;
-    if (!insidePlayfield || currentLevel == null) return;
+    isPointerInsidePlayfield = true;
+    if (currentLevel == null) return;
     const radius = MELANIN_LEVELS[currentLevel].diameter / 2;
     lastValidDropX = clamp(point.x, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4);
     currentDropX = lastValidDropX;
   }
 
   function toLogicalPoint(event) {
-    const rect = canvas.getBoundingClientRect();
+    const { canvasRect, scaleX, scaleY } = getLayoutMetrics();
+    if (!scaleX || !scaleY) return { x: PLAYFIELD_CENTER_X, y: GAME_TOP };
     return {
-      x: (event.clientX - rect.left) * LOGICAL_WIDTH / rect.width,
-      y: (event.clientY - rect.top) * LOGICAL_HEIGHT / rect.height
+      x: (event.clientX - canvasRect.left) / scaleX,
+      y: (event.clientY - canvasRect.top) / scaleY
     };
   }
 
@@ -633,6 +752,8 @@
     gameOver = true;
     dangerSince = null;
     dangerLineWarning = false;
+    resetPointerGesture();
+    isPointerInsidePlayfield = false;
     // Timed clean-up still runs (for example, an already-earned Lv 9 reward).
     // Any pending drop checks gameOver before preparing a new piece; restartGame clears all timers.
     ddmMode = false;
@@ -663,6 +784,7 @@
     currentLevel = null;
     nextLevel = randomDropLevel();
     isPointerInsidePlayfield = false;
+    resetPointerGesture();
     lastValidDropX = PLAYFIELD_CENTER_X;
     currentDropX = PLAYFIELD_CENTER_X;
     readyToDrop = true;
@@ -707,20 +829,26 @@
     const radius = MELANIN_LEVELS[level].diameter / 2;
     const x = LOGICAL_WIDTH / 2 + debugSide * Math.min(radius * 0.62, 52);
     debugSide *= -1;
-    const entity = createMelanin(level, clamp(x, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4), 610);
+    const entity = createMelanin(level, clamp(x, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4), Math.round(LOGICAL_HEIGHT * LAYOUT.debugSpawnY));
     entity.bornAt = gameTime - 1500;
     showToast(`DEBUG：放入 Lv ${level}`, 900);
   }
 
   function resizeGame() {
     if (!canvas || !ctx) return;
-    const rect = wrapper.getBoundingClientRect();
+    const metrics = getLayoutMetrics();
+    if (!metrics.frameWidth || !metrics.frameHeight) return;
+    const uiScale = getUIScale(metrics.frameWidth);
+    wrapper.style.setProperty('--ui-scale', String(uiScale));
+    updateDangerLineGeometry(uiScale);
     const deviceRatio = window.devicePixelRatio || 1;
-    const renderScale = Math.max(1, Math.min(MAX_CANVAS_SCALE, deviceRatio * rect.width / LOGICAL_WIDTH));
+    const renderScale = Math.max(1, Math.min(MAX_CANVAS_SCALE, deviceRatio * uiScale));
     canvas.width = Math.round(LOGICAL_WIDTH * renderScale);
     canvas.height = Math.round(LOGICAL_HEIGHT * renderScale);
     ctx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
     resizeNextPreview();
+    // Matter.js stays in the normalized reference frame; the 16:9 wrapper scales visuals and collisions together.
+    // Resizing only refreshes render metrics, so score, bodies, DDM, theme, and progress remain untouched.
   }
 
   function resizeNextPreview() {
@@ -801,7 +929,7 @@
     const left = GAME_LEFT - BOWL_SIDE_PADDING;
     const right = GAME_RIGHT + BOWL_SIDE_PADDING;
     const top = GAME_TOP - BOWL_TOP_PADDING;
-    const bottom = GAME_FLOOR + BOWL_BOTTOM_PADDING;
+    const bottom = PLAYFIELD_BOTTOM;
     const width = right - left;
     const height = bottom - top;
 
