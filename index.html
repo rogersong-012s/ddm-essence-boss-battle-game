@@ -4,15 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#8bcfe8">
-  <meta name="description" content="在夏日草地上放下可愛黑色素，合成淡化，DDM 緊急救援！">
-  <title>Melanin Merge — DDM 淡化救援</title>
+  <meta name="description" content="合成 DDM 精華累積能量，由玩家角色討伐黑色素 Boss。">
+  <title>DDM Essence Merge — Melanin Boss Battle</title>
   <link rel="stylesheet" href="styles.css">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+  <script defer src="js/config.js"></script>
+  <script defer src="js/themes.js"></script>
+  <script defer src="js/skills.js"></script>
+  <script defer src="js/combat.js"></script>
+  <script defer src="js/effects.js"></script>
+  <script defer src="js/renderer.js"></script>
   <script defer src="game.js"></script>
 </head>
 <body>
   <main class="page-shell">
-    <section class="game-wrapper" aria-label="Melanin Merge 遊戲">
+    <section class="game-wrapper" aria-label="DDM 精華合成戰鬥遊戲">
       <div class="summer-scene" aria-hidden="true">
         <div class="summer-sun"><span></span></div>
         <div class="summer-cloud cloud-one"><i></i></div>
@@ -24,46 +30,128 @@
         <div class="meadow-flower flower-three"><i></i><b></b></div>
         <div class="meadow-flower flower-four"><i></i><b></b></div>
       </div>
-      <canvas id="game-canvas" aria-label="黑色素合成遊戲場，移動游標選擇位置，點擊放下黑色素"></canvas>
+      <canvas id="game-canvas" aria-label="DDM 精華合成戰場，移動游標選擇位置，點擊放下 DDM 精華"></canvas>
 
       <header class="game-header">
         <div class="brand-lockup">
           <div class="brand-mark" aria-hidden="true"><span>✦</span><i></i></div>
           <div>
-            <p class="eyebrow">DDM SKIN RESCUE GAME</p>
-            <h1>MELANIN <span>MERGE</span></h1>
+            <p class="eyebrow">DDM ESSENCE BATTLE</p>
+            <h1>ESSENCE <span>MERGE</span></h1>
           </div>
         </div>
-        <div class="header-note"><span class="pulse-dot"></span> 合成・淡化・救援</div>
+        <div class="header-note"><span class="pulse-dot"></span> 合成・蓄能・討伐</div>
         <button class="restart-quiet" id="restart-top" type="button" title="重新開始" aria-label="重新開始">↻</button>
       </header>
 
-      <aside class="score-panel glass-panel" aria-label="遊戲分數">
-        <div class="panel-kicker"><span class="tiny-sun">✦</span> YOUR SCORE</div>
-        <div class="score-number" id="score-value">0</div>
-        <div class="score-divider"></div>
-        <div class="record-row"><span>BEST</span><strong id="best-value">0</strong></div>
-        <div class="record-row"><span>本局最高等級</span><strong id="highest-value">LV 1</strong></div>
-      </aside>
+      <svg class="attack-effects" id="attack-effects" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="meteor-tail-gradient" x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0" stop-color="#fff9d9" stop-opacity=".96" />
+            <stop offset=".38" stop-color="#ffe48a" stop-opacity=".82" />
+            <stop offset="1" stop-color="#ff936f" stop-opacity="0" />
+          </linearGradient>
+          <radialGradient id="meteor-core-gradient">
+            <stop offset="0" stop-color="#fff" />
+            <stop offset=".42" stop-color="#fff3b0" />
+            <stop offset="1" stop-color="#ff9e62" stop-opacity="0" />
+          </radialGradient>
+        </defs>
+      </svg>
 
-      <aside class="recipe-panel glass-panel" aria-label="九階合成旅程">
-        <div class="recipe-title"><span>你的合成旅程</span><span class="recipe-sparkle">✦</span></div>
-        <div class="recipe-track" role="img" aria-label="從 Lv 1 逐階合成至 Lv 9">
-          <span class="recipe-bubble locked recipe-lv1">1</span>
-          <span class="recipe-bubble locked recipe-lv2">2</span>
-          <span class="recipe-bubble locked recipe-lv3">3</span>
-          <span class="recipe-bubble locked recipe-lv4">4</span>
-          <span class="recipe-bubble locked recipe-lv5">5</span>
-          <span class="recipe-bubble locked recipe-lv6">6</span>
-          <span class="recipe-bubble locked recipe-lv7">7</span>
-          <span class="recipe-bubble locked recipe-lv8">8</span>
-          <span class="recipe-bubble locked recipe-lv9">9</span>
+      <aside class="boss-target" id="boss-target" aria-label="黑色素 Boss 敵方目標">
+        <div class="boss-health" id="boss-health-card">
+          <div class="boss-health-heading"><span id="boss-hp-label">BOSS HP</span><strong id="boss-hp-value">-- / --</strong></div>
+          <div class="boss-hp-track" id="boss-hp-track" role="progressbar" aria-label="Boss 生命值" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+            <span class="boss-hp-fill" id="boss-hp-fill"></span>
+          </div>
         </div>
-        <p class="recipe-description">兩顆相同等級相碰<br>就會合成</p>
-        <p class="recipe-goal">一路挑戰到 Lv 9</p>
+        <div class="boss-visual">
+          <svg class="boss-core" id="boss-core" viewBox="0 0 240 240" role="img" aria-label="黑色素暴君">
+            <defs>
+              <linearGradient id="boss-body-gradient" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#594253" />
+                <stop offset="1" stop-color="#282438" />
+              </linearGradient>
+              <radialGradient id="boss-belly-gradient" cx="38%" cy="28%" r="72%">
+                <stop offset="0" stop-color="#a88777" />
+                <stop offset="1" stop-color="#664956" />
+              </radialGradient>
+            </defs>
+            <ellipse cx="120" cy="218" rx="78" ry="12" fill="#387f7c" opacity=".22" />
+            <path d="M61 75 43 31c-3-7 5-12 11-7l29 24M179 75l18-44c3-7-5-12-11-7l-29 24" fill="#392d43" stroke="#211e2c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M48 151c-9 8-20 10-27 7-7-4-5-14 3-18l32-22m132 33c9 8 20 10 27 7 7-4 5-14-3-18l-32-22" fill="none" stroke="#473447" stroke-width="17" stroke-linecap="round" />
+            <path d="M120 45c-48 0-78 37-78 91 0 49 27 77 78 77s78-28 78-77c0-54-30-91-78-91Z" fill="url(#boss-body-gradient)" stroke="#211e2c" stroke-width="7" />
+            <path d="M72 145c4-27 23-42 48-42s44 15 48 42c4 27-14 46-48 46s-52-19-48-46Z" fill="url(#boss-belly-gradient)" opacity=".95" />
+            <ellipse cx="91" cy="112" rx="12" ry="17" fill="#fff1c6" />
+            <ellipse cx="149" cy="112" rx="12" ry="17" fill="#fff1c6" />
+            <ellipse cx="94" cy="116" rx="5" ry="9" fill="#a83755" />
+            <ellipse cx="146" cy="116" rx="5" ry="9" fill="#a83755" />
+            <path d="M105 166c8-10 22-10 30 0" fill="none" stroke="#392533" stroke-width="7" stroke-linecap="round" />
+            <path d="M72 79c9 2 20 7 31 16m34-16c-12 2-23 7-31 16" fill="none" stroke="#211b29" stroke-width="8" stroke-linecap="round" />
+            <ellipse cx="65" cy="143" rx="8" ry="5" fill="#211b29" opacity=".48" />
+            <ellipse cx="174" cy="158" rx="10" ry="6" fill="#211b29" opacity=".48" />
+            <path d="m70 53-8-18 20 14m88 4 8-18-20 14" fill="#d6ad68" stroke="#fff1c4" stroke-width="3" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <div class="boss-caption"><span>RAID BOSS</span><strong>黑色素暴君</strong></div>
       </aside>
 
-      <aside class="next-panel glass-panel" aria-label="下一顆黑色素">
+      <aside class="player-hero" aria-label="玩家角色，面向黑色素 Boss">
+        <svg class="player-hero-art" viewBox="0 0 240 240" role="img" aria-label="面向右側、手持精華能量杖的可愛護膚守衛">
+          <defs>
+            <linearGradient id="hero-coat-gradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#fffdf5" />
+              <stop offset="1" stop-color="#d8f0df" />
+            </linearGradient>
+            <linearGradient id="hero-hair-gradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#76515a" />
+              <stop offset="1" stop-color="#49394b" />
+            </linearGradient>
+            <radialGradient id="hero-orb-gradient">
+              <stop offset="0" stop-color="#fff" />
+              <stop offset=".42" stop-color="#fff5b5" />
+              <stop offset="1" stop-color="#ffc766" stop-opacity=".12" />
+            </radialGradient>
+          </defs>
+          <ellipse cx="120" cy="224" rx="65" ry="10" fill="#397d79" opacity=".17" />
+          <path d="M82 166 75 205q-2 10 8 12h20q9-2 6-12l-3-39m31 0-5 40q-1 10 9 12h19q10-2 6-12l-13-43" fill="#477b82" stroke="#365f6d" stroke-width="5" stroke-linejoin="round" />
+          <path d="M74 207q13-7 30 1l6 12q-1 9-12 9H67q-7-2-4-9Zm58 3q12-7 28 1l11 10q2 8-8 9h-32q-8-2-5-10Z" fill="#f2bd7f" stroke="#a9705e" stroke-width="4" stroke-linejoin="round" />
+          <path d="M72 134q-34 13-39 60l24 19 28-23 60 1 26 22 31-20q-5-43-42-59Z" fill="#62ad9f" stroke="#4d8d8c" stroke-width="5" stroke-linejoin="round" />
+          <path d="M83 130q-15 20-16 54l22 32h61l22-31q-1-34-18-54l-30-10Z" fill="url(#hero-coat-gradient)" stroke="#81bcae" stroke-width="5" stroke-linejoin="round" />
+          <path d="m106 128 14 23 15-23 13 8-17 34h-21l-17-34Z" fill="#8bc9bb" stroke="#67a997" stroke-width="3" stroke-linejoin="round" />
+          <path d="m105 152 15 14 15-14 8 11-13 32h-20l-13-32Z" fill="#f1cf86" stroke="#ddb66f" stroke-width="3" stroke-linejoin="round" />
+          <circle cx="157" cy="180" r="8" fill="#82c5ad" stroke="#fffdf5" stroke-width="3" />
+          <path d="M157 175v10m-5-5h10" stroke="#fffdf5" stroke-width="2.5" stroke-linecap="round" />
+          <path d="M75 145q-24 10-29 34l20 12q15-6 25-23m66-29q21 4 31-17l13 7q-4 29-30 40l-20-12Z" fill="#f2bc91" stroke="#bd866e" stroke-width="5" stroke-linejoin="round" />
+          <path d="m146 105 5-17 15 7 5 34-12 18-26-13Z" fill="#f2bc91" stroke="#bd866e" stroke-width="4" stroke-linejoin="round" />
+          <path d="m157 96-33-66" stroke="#8bc9bb" stroke-width="9" stroke-linecap="round" />
+          <path d="m157 96-33-66" stroke="#fff4cc" stroke-width="2.5" stroke-linecap="round" opacity=".8" />
+          <path d="m131 44-11-14 5-17 12 12 4 15Z" fill="#e9c57b" stroke="#fff7dc" stroke-width="3" stroke-linejoin="round" />
+          <path d="M71 79q-9-46 29-58 33-12 55 8 19 18 9 56l-7 35q-14 23-38 22-30 0-42-26Z" fill="url(#hero-hair-gradient)" stroke="#49394b" stroke-width="5" stroke-linejoin="round" />
+          <path d="M80 79q-1-34 26-45 30-12 50 9 10 12 8 31-14-5-23-21-19 15-54 16l-8 24Z" fill="#89606a" stroke="#59414f" stroke-width="4" stroke-linejoin="round" />
+          <path d="M88 51q11-17 29-18m-30 68q0 31 18 42" fill="none" stroke="#b47a77" stroke-width="5" stroke-linecap="round" opacity=".74" />
+          <path d="M97 54q18-15 40-4 17 9 19 31l-4 23q-6 23-28 27-21 2-34-17l-7-25q1-23 14-35Z" fill="#f4c69f" stroke="#bd866e" stroke-width="4" stroke-linejoin="round" />
+          <path d="m151 85 13 4-13 7" fill="#e9b48f" stroke="#bd866e" stroke-width="3" stroke-linejoin="round" />
+          <ellipse cx="145" cy="76" rx="6.2" ry="8" fill="#fffaf0" />
+          <ellipse cx="148" cy="77" rx="3" ry="5.2" fill="#4b5667" />
+          <circle cx="149" cy="75" r="1.5" fill="#fff" />
+          <ellipse cx="122" cy="76" rx="4.4" ry="6" fill="#fffaf0" />
+          <ellipse cx="124" cy="77" rx="2.3" ry="4" fill="#4b5667" />
+          <path d="m137 62 13 1m-30 1 9-2" stroke="#74505a" stroke-width="3.5" stroke-linecap="round" />
+          <path d="M135 105q9 6 17-2" fill="none" stroke="#ad626c" stroke-width="3.5" stroke-linecap="round" />
+          <ellipse cx="136" cy="93" rx="7" ry="3.5" fill="#e99091" opacity=".4" />
+          <path d="m101 27 7-10 7 9 12 2-9 7-2 12-8-10-12-2Z" fill="#a9d6ad" stroke="#e6f5d8" stroke-width="3" stroke-linejoin="round" />
+          <circle cx="124" cy="28" r="12" fill="url(#hero-orb-gradient)" />
+          <circle cx="124" cy="28" r="6.5" fill="#fff8c4" stroke="#fff" stroke-width="2" />
+          <path d="m124 18 2.4 7.6 7.6 2.4-7.6 2.4-2.4 7.6-2.4-7.6-7.6-2.4 7.6-2.4Z" fill="#fffdf1" opacity=".85" />
+          <circle id="player-attack-origin" cx="124" cy="28" r="9" fill="transparent" aria-hidden="true" />
+          <path d="M76 169q-13 8-17 24l15 9 14-15" fill="#f4c69f" stroke="#bd866e" stroke-width="4" stroke-linejoin="round" />
+        </svg>
+        <div class="player-caption"><span>PLAYER</span><strong>DDM 守衛</strong></div>
+      </aside>
+
+      <aside class="next-panel glass-panel" aria-label="下一顆 DDM 精華">
         <div class="panel-kicker">NEXT <span class="next-label">下一顆</span></div>
         <div class="next-preview-wrap" id="next-preview" data-level="1" aria-hidden="true">
           <canvas class="next-preview-canvas" id="next-preview-canvas"></canvas>
@@ -72,19 +160,29 @@
       </aside>
 
       <div class="mode-banner" id="mode-banner" role="status" aria-live="polite" hidden>
-        <span class="mode-cross">✦</span><span>選擇一個黑色素進行淡化</span><button id="cancel-ddm" type="button" aria-label="取消 DDM 選擇">×</button>
+        <span class="mode-cross">✦</span><span id="skill-mode-message">選取一顆 DDM 精華使用技能</span><button id="cancel-skill" type="button" aria-label="取消技能選取">×</button>
       </div>
 
-      <aside class="rescue-panel" aria-label="DDM 淡化救援">
-        <button class="ddm-button" id="ddm-button" type="button" aria-pressed="false">
+      <aside class="ddm-panel" aria-label="直接使用DDM">
+        <button class="ddm-button skill-button" id="ddm-button" type="button" aria-pressed="false">
           <span class="ddm-icon" aria-hidden="true">
             <svg viewBox="0 0 52 64" role="img"><path d="M19 4h14v9l8 8v32a6 6 0 0 1-6 6H17a6 6 0 0 1-6-6V21l8-8z"/><path d="M19 13h14M11 27h30"/><path class="bottle-cross" d="M26 33v13M19.5 39.5h13"/><path class="bottle-drop" d="M16 51c3-4 7-4 10 0"/></svg>
           </span>
-          <span class="ddm-copy"><strong>DDM 救援</strong><small>緊急淡化工具</small></span>
+          <span class="ddm-copy"><strong>直接使用DDM</strong><small>標準傷害 × 25%</small></span>
           <span class="ddm-count" id="ddm-count">× 3</span>
           <span class="ddm-shine" aria-hidden="true"></span>
         </button>
-        <p class="rescue-hint" id="rescue-hint">點擊後選擇場上的黑色素</p>
+        <p class="ddm-hint" id="ddm-hint">選取精華，轉化為攻擊能量</p>
+      </aside>
+
+      <aside class="ssw-panel" aria-label="使用SSW+1">
+        <button class="ssw-button skill-button" id="ssw-button" type="button" aria-pressed="false">
+          <span class="ssw-icon" aria-hidden="true">✦</span>
+          <span class="ddm-copy"><strong>使用SSW+1</strong><small>精華直接升級一階</small></span>
+          <span class="ddm-count" id="ssw-count">× 3</span>
+          <span class="ddm-shine" aria-hidden="true"></span>
+        </button>
+        <p class="ddm-hint" id="ssw-hint">選取一顆精華提升一級</p>
       </aside>
 
       <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -97,20 +195,22 @@
 
       <section class="game-over" id="game-over" hidden aria-labelledby="game-over-title" role="dialog" aria-modal="true">
         <div class="game-over-card">
-          <div class="over-badge" aria-hidden="true">☁</div>
-          <p class="eyebrow">A LITTLE RESET?</p>
-          <h2 id="game-over-title">堆得有點高了！</h2>
-          <p class="over-copy">休息一下，再來挑戰最高等級吧。</p>
-          <div class="over-stats"><div><span>本次分數</span><strong id="final-score">0</strong></div><div><span>本局最高等級</span><strong id="final-highest">LV 1</strong></div></div>
-          <button class="play-again" id="restart-button" type="button"><span>↻</span> 重新開始</button>
+          <div class="over-badge" id="end-state-badge" aria-hidden="true">✦</div>
+          <p class="eyebrow" id="end-state-eyebrow">戰鬥結束</p>
+          <h2 id="game-over-title">這回合結束了</h2>
+          <p class="over-copy" id="game-over-copy">重新整理能量，再來挑戰黑色素暴君。</p>
+          <div class="over-stats"><div><span>本局最高等級</span><strong id="final-highest">LV 1</strong></div></div>
+          <div class="end-actions">
+            <button class="continue-game" id="continue-button" type="button" hidden>繼續遊戲</button>
+            <button class="play-again" id="restart-button" type="button"><span>↻</span> 重開一局</button>
+          </div>
         </div>
       </section>
 
-      <aside class="theme-switcher" id="theme-switcher" aria-label="球色系切換">
-        <span class="theme-switcher-label">球色系</span>
-        <div class="theme-options" id="theme-options" role="group" aria-label="選擇球的色系"></div>
+      <aside class="theme-switcher" id="theme-switcher" aria-label="精華色系切換">
+        <span class="theme-switcher-label">精華色系</span>
+        <div class="theme-options" id="theme-options" role="group" aria-label="選擇精華的色系"></div>
       </aside>
-      <div class="debug-chip" id="debug-chip" hidden>DEV · 1–8 等級　D 補充 DDM　R 重開</div>
     </section>
   </main>
 </body>

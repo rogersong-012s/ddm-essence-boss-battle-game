@@ -4,148 +4,91 @@
   // ---------------------------
   // Tunable game configuration
   // ---------------------------
-  const DEBUG = true;
-  const REFERENCE_WIDTH = 1600;
-  const REFERENCE_HEIGHT = 900;
-  const DANGER_ZONE_DIAMETER_MULTIPLIER = 2.05;
-  // All gameplay geometry uses one normalized 1600 × 900 reference frame.
-  // The wrapper is always displayed at 16:9, so CSS scales this reference space uniformly.
-  const LAYOUT = Object.freeze({
-    referenceFrame: Object.freeze({ width: REFERENCE_WIDTH, height: REFERENCE_HEIGHT }),
-    playfield: Object.freeze({ x: 570 / REFERENCE_WIDTH, y: 156 / REFERENCE_HEIGHT, width: 460 / REFERENCE_WIDTH, height: 630 / REFERENCE_HEIGHT }),
-    dropOffset: 42 / 630,
-    bowlPadding: Object.freeze({ side: 27 / 460, top: 21 / 630, bottom: 24 / 630 }),
-    walls: Object.freeze({ thickness: 26 / 460, extension: 130 / 630 }),
-    ballDiameterRatios: Object.freeze([0, 36 / 460, 52 / 460, 72 / 460, 96 / 460, 124 / 460, 158 / 460, 198 / 460, 244 / 460, 298 / 460]),
-    debugSpawnY: 610 / REFERENCE_HEIGHT
-  });
-  const LOGICAL_WIDTH = LAYOUT.referenceFrame.width;
-  const LOGICAL_HEIGHT = LAYOUT.referenceFrame.height;
-  const PLAYFIELD_WIDTH = Math.round(LOGICAL_WIDTH * LAYOUT.playfield.width);
-  const PLAYFIELD_HEIGHT = Math.round(LOGICAL_HEIGHT * LAYOUT.playfield.height);
-
-  function ballDiameterForLevel(level) {
-    return Math.round(PLAYFIELD_WIDTH * LAYOUT.ballDiameterRatios[level]);
-  }
-  const MAX_LEVEL = 9;
-  const DANGER_REFERENCE_LEVEL = 8;
-  const MAX_DDM = 3;
-  const INITIAL_DDM = 3;
-  const GAME_OVER_DELAY = 2000;
-  const DROP_COOLDOWN = 520;
-  const PHYSICS_GRAVITY = 1;
-  const PHYSICS_GRAVITY_SCALE = 0.00105;
-  const PHYSICS_TIMESTEP = 1000 / 60;
-  const MAX_PHYSICS_STEPS_PER_FRAME = 3;
-  const MERGE_DELAY = 80;
-  const DDM_FADE_DURATION = 420;
-  const MAX_PRESENTATION_DURATION = 900;
-  const COMBO_WINDOW = 1200;
-  const MAX_MELANIN_BONUS = 1800;
-  const SCORE_TABLE = { 1: 5, 2: 10, 3: 20, 4: 40, 5: 80, 6: 160, 7: 320, 8: 640 };
-  const WARM_LEVELS = [
-    null,
-    { diameter: ballDiameterForLevel(1), color: '#FCEEE8', highlight: '#FFF9F5', shadow: '#EBDAD7', eyeColor: '#FFFCF9', eyeOutlineColor: '#DFA6A2', pupilColor: '#764B53', cheekColor: 'rgba(220,132,141,.34)', labelColor: '#875B61', badgeFill: 'rgba(255,250,247,.72)', faceColor: '#875B61', face: 'calm', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .2, labelFont: 9 },
-    { diameter: ballDiameterForLevel(2), color: '#F9E1D7', highlight: '#FFF5EF', shadow: '#EBCBC1', eyeColor: '#FFFCF8', eyeOutlineColor: '#D99A97', pupilColor: '#74474F', cheekColor: 'rgba(220,125,138,.34)', labelColor: '#8C565B', badgeFill: 'rgba(255,249,245,.68)', faceColor: '#8C565B', face: 'smile', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .22, labelFont: 12 },
-    { diameter: ballDiameterForLevel(3), color: '#F6D1C2', highlight: '#FFEFE8', shadow: '#E7B6AA', eyeColor: '#FFFBF7', eyeOutlineColor: '#D48686', pupilColor: '#75434B', cheekColor: 'rgba(217,113,132,.34)', labelColor: '#945157', badgeFill: 'rgba(255,249,245,.62)', faceColor: '#945157', face: 'happy', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .24, labelFont: 13 },
-    { diameter: ballDiameterForLevel(4), color: '#F2C0AF', highlight: '#FFE8E0', shadow: '#E0A698', eyeColor: '#FFF9F5', eyeOutlineColor: '#CB7E82', pupilColor: '#743F49', cheekColor: 'rgba(215,105,127,.33)', labelColor: '#94484F', badgeFill: 'rgba(255,248,244,.58)', faceColor: '#94484F', face: 'wink', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .22, labelFont: 14 },
-    { diameter: ballDiameterForLevel(5), color: '#EEAE9B', highlight: '#FFE0D6', shadow: '#D78E84', eyeColor: '#FFF9F4', eyeOutlineColor: '#C87077', pupilColor: '#733B46', cheekColor: 'rgba(211,99,123,.32)', labelColor: '#8A454D', badgeFill: 'rgba(255,248,243,.56)', faceColor: '#8A454D', face: 'proud', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .25, labelFont: 16 },
-    { diameter: ballDiameterForLevel(6), color: '#E99988', highlight: '#FFD7CE', shadow: '#D27A75', eyeColor: '#FFF9F5', eyeOutlineColor: '#C96C72', pupilColor: '#703A45', cheekColor: 'rgba(219,112,132,.32)', labelColor: '#80434B', badgeFill: 'rgba(255,247,243,.5)', faceColor: '#80434B', face: 'mischief', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .23, labelFont: 18 },
-    { diameter: ballDiameterForLevel(7), color: '#E28379', highlight: '#FFC9C3', shadow: '#C96769', eyeColor: '#FFF8F4', eyeOutlineColor: '#F0B0AB', pupilColor: '#713940', cheekColor: 'rgba(255,175,179,.34)', labelColor: '#FFF8F4', badgeFill: 'rgba(132,48,55,.44)', faceColor: '#FFF5F0', face: 'confident', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .22, labelFont: 20 },
-    { diameter: ballDiameterForLevel(8), color: '#D96E69', highlight: '#F7B4AF', shadow: '#BE595F', eyeColor: '#FFF8F3', eyeOutlineColor: '#EBA7A4', pupilColor: '#6F3741', cheekColor: 'rgba(255,185,187,.32)', labelColor: '#FFF8F4', badgeFill: 'rgba(111,41,51,.4)', faceColor: '#FFF3EE', face: 'gentle', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .2, labelFont: 22 },
-    { diameter: ballDiameterForLevel(9), color: '#CC5C5D', highlight: '#EF9997', shadow: '#AF4C58', eyeColor: '#FFF8F4', eyeOutlineColor: '#E59A9B', pupilColor: '#68323D', cheekColor: 'rgba(255,190,190,.3)', labelColor: '#FFF8F4', badgeFill: 'rgba(95,32,45,.4)', faceColor: '#FFF3EF', face: 'boss', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .23, labelFont: 24 }
-  ];
-
-  const RAINBOW_COLORS = [
-    null,
-    { color: '#EF89AB', highlight: '#FFD3E1', shadow: '#D36B8D', outlineColor: 'rgba(255,248,251,.68)', eyeColor: '#FFFCF9', eyeOutlineColor: '#C76387', pupilColor: '#653B4D', cheekColor: 'rgba(207,74,109,.26)', labelColor: '#704252', badgeFill: 'rgba(255,251,252,.76)', faceColor: '#704252' },
-    { color: '#F18477', highlight: '#FFD1C0', shadow: '#D5635D', outlineColor: 'rgba(255,249,247,.68)', eyeColor: '#FFFCF8', eyeOutlineColor: '#CE6B65', pupilColor: '#663E49', cheekColor: 'rgba(213,87,93,.26)', labelColor: '#78454B', badgeFill: 'rgba(255,250,246,.74)', faceColor: '#78454B' },
-    { color: '#F3A15F', highlight: '#FFE0B1', shadow: '#D77F44', outlineColor: 'rgba(255,249,244,.68)', eyeColor: '#FFFCF7', eyeOutlineColor: '#CF793F', pupilColor: '#69414A', cheekColor: 'rgba(209,104,94,.25)', labelColor: '#70464D', badgeFill: 'rgba(255,250,245,.76)', faceColor: '#70464D' },
-    { color: '#E7C45D', highlight: '#FFF0AE', shadow: '#C8A543', outlineColor: 'rgba(255,252,241,.72)', eyeColor: '#FFFCF5', eyeOutlineColor: '#C7A441', pupilColor: '#49444D', cheekColor: 'rgba(224,102,119,.26)', labelColor: '#514750', badgeFill: 'rgba(255,252,242,.78)', faceColor: '#514750' },
-    { color: '#94C56E', highlight: '#DDF0B4', shadow: '#6E9D56', outlineColor: 'rgba(250,255,241,.7)', eyeColor: '#FFFCF5', eyeOutlineColor: '#78A752', pupilColor: '#36523D', cheekColor: 'rgba(226,113,129,.28)', labelColor: '#405842', badgeFill: 'rgba(250,255,244,.76)', faceColor: '#405842' },
-    { color: '#67BBC5', highlight: '#C7EBEE', shadow: '#438E9C', outlineColor: 'rgba(244,255,255,.72)', eyeColor: '#FFFCF8', eyeOutlineColor: '#4B9DA9', pupilColor: '#31535D', cheekColor: 'rgba(236,130,148,.27)', labelColor: '#345766', badgeFill: 'rgba(246,255,255,.76)', faceColor: '#345766' },
-    { color: '#7298D9', highlight: '#CBDBF6', shadow: '#506DA9', outlineColor: 'rgba(246,250,255,.72)', eyeColor: '#FFF9F3', eyeOutlineColor: '#AFC4EA', pupilColor: '#4B5682', cheekColor: 'rgba(255,178,190,.34)', labelColor: '#FFF9F3', badgeFill: 'rgba(46,67,120,.4)', faceColor: '#FFF7F1' },
-    { color: '#8D82D1', highlight: '#D5CEF4', shadow: '#625BA8', outlineColor: 'rgba(250,248,255,.72)', eyeColor: '#FFF9F4', eyeOutlineColor: '#BDB4EA', pupilColor: '#4D477E', cheekColor: 'rgba(255,183,198,.32)', labelColor: '#FFF9F4', badgeFill: 'rgba(53,49,108,.4)', faceColor: '#FFF7F2' },
-    { color: '#B174C2', highlight: '#E6C3F0', shadow: '#805397', outlineColor: 'rgba(255,249,255,.72)', eyeColor: '#FFFAF7', eyeOutlineColor: '#D0ADE0', pupilColor: '#543664', cheekColor: 'rgba(255,192,206,.3)', labelColor: '#FFF9F5', badgeFill: 'rgba(72,44,94,.42)', faceColor: '#FFF7F3' }
-  ];
-
-  const RAINBOW_LEVELS = [
-    null,
-    ...WARM_LEVELS.slice(1).map((level, index) => ({ ...level, ...RAINBOW_COLORS[index + 1] }))
-  ];
-
-  const BALL_THEMES = {
-    warm: { name: '暖色系', swatch: 'linear-gradient(135deg, #FCEEE8 0%, #EEAE9B 55%, #CC5C5D 100%)', levels: WARM_LEVELS },
-    rainbow: { name: '繽紛彩色', swatch: 'conic-gradient(#EF89AB 0deg, #F18477 50deg, #F3A15F 95deg, #E7C45D 140deg, #94C56E 185deg, #67BBC5 230deg, #7298D9 275deg, #8D82D1 320deg, #B174C2 360deg)', levels: RAINBOW_LEVELS }
-  };
-
-  let currentThemeKey = 'warm';
+  // Gameplay constants, theme assets, and mutable run state have one owner each.
+  const GAME_CONFIG = window.DDMGameConfig;
+  const {
+    DEBUG, REFERENCE_WIDTH, REFERENCE_HEIGHT, DANGER_ZONE_DIAMETER_MULTIPLIER, LAYOUT,
+    LOGICAL_WIDTH, LOGICAL_HEIGHT, PLAYFIELD_WIDTH, PLAYFIELD_HEIGHT, SKILL_CONFIG, DROP_DAMAGE,
+    GAME_OVER_DELAY, DROP_COOLDOWN, PHYSICS_GRAVITY, PHYSICS_GRAVITY_SCALE, PHYSICS_TIMESTEP,
+    MAX_PHYSICS_STEPS_PER_FRAME, MERGE_DELAY, DDM_FADE_DURATION, MAX_PRESENTATION_DURATION,
+    COMBO_WINDOW, MAX_MELANIN_BONUS, BOSS_CONFIG, SCORE_TABLE, GAME_LEFT, GAME_RIGHT,
+    PLAYFIELD_CENTER_X, GAME_TOP, GAME_FLOOR, DROP_Y, WALL_THICKNESS, WALL_EXTENSION,
+    BOWL_SIDE_PADDING, BOWL_TOP_PADDING, BOWL_BOTTOM_PADDING, PLAYFIELD_BOTTOM,
+    MAX_FRAME_DELTA, MAX_CANVAS_SCALE, DANGER_LABEL_FONT_SIZE
+  } = GAME_CONFIG;
+  const { WARM_LEVELS, BALL_THEMES } = window.DDMGameThemes.create(GAME_CONFIG.ballDiameterForLevel);
+  const MAX_LEVEL = WARM_LEVELS.length - 1;
+  const SECOND_HIGHEST_LEVEL = MAX_LEVEL - 1;
+  let currentThemeKey = 'rainbow';
   let MELANIN_LEVELS = BALL_THEMES[currentThemeKey].levels;
-
-  const GAME_LEFT = Math.round(LOGICAL_WIDTH * LAYOUT.playfield.x);
-  const GAME_RIGHT = GAME_LEFT + PLAYFIELD_WIDTH;
-  const PLAYFIELD_CENTER_X = (GAME_LEFT + GAME_RIGHT) / 2;
-  const GAME_TOP = Math.round(LOGICAL_HEIGHT * LAYOUT.playfield.y);
-  const GAME_FLOOR = GAME_TOP + PLAYFIELD_HEIGHT;
-  const DROP_Y = GAME_TOP + Math.round(PLAYFIELD_HEIGHT * LAYOUT.dropOffset);
-  const WALL_THICKNESS = Math.round(PLAYFIELD_WIDTH * LAYOUT.walls.thickness);
-  const WALL_EXTENSION = Math.round(PLAYFIELD_HEIGHT * LAYOUT.walls.extension);
-  const BOWL_SIDE_PADDING = Math.round(PLAYFIELD_WIDTH * LAYOUT.bowlPadding.side);
-  const BOWL_TOP_PADDING = Math.round(PLAYFIELD_HEIGHT * LAYOUT.bowlPadding.top);
-  const BOWL_BOTTOM_PADDING = Math.round(PLAYFIELD_HEIGHT * LAYOUT.bowlPadding.bottom);
-  const PLAYFIELD_BOTTOM = GAME_FLOOR + BOWL_BOTTOM_PADDING;
-  let lv8Radius = MELANIN_LEVELS[DANGER_REFERENCE_LEVEL].diameter / 2;
-  let lv8Diameter = lv8Radius * 2;
-  let dangerZoneHeight = lv8Diameter * DANGER_ZONE_DIAMETER_MULTIPLIER;
+  let secondHighestRadius = MELANIN_LEVELS[SECOND_HIGHEST_LEVEL].diameter / 2;
+  let secondHighestDiameter = secondHighestRadius * 2;
+  let dangerZoneHeight = secondHighestDiameter * DANGER_ZONE_DIAMETER_MULTIPLIER;
   let DANGER_LINE_Y = PLAYFIELD_BOTTOM - dangerZoneHeight;
   let lastDangerDebugKey = '';
-  const MAX_FRAME_DELTA = 34;
-  const MAX_CANVAS_SCALE = 2.5;
-  const DANGER_LABEL_FONT_SIZE = LOGICAL_WIDTH * (14 / REFERENCE_WIDTH);
-  const BEST_KEY = 'melanin-merge-best-v1';
 
   const canvas = document.querySelector('#game-canvas');
   const ctx = canvas.getContext('2d', { alpha: true });
   const nextPreviewCanvas = document.querySelector('#next-preview-canvas');
   const nextPreviewCtx = nextPreviewCanvas.getContext('2d', { alpha: true });
   const wrapper = document.querySelector('.game-wrapper');
-  const scoreEl = document.querySelector('#score-value');
-  const bestEl = document.querySelector('#best-value');
-  const highestEl = document.querySelector('#highest-value');
   const nextEl = document.querySelector('#next-level');
   const nextPreviewEl = document.querySelector('#next-preview');
   const ddmButton = document.querySelector('#ddm-button');
   const ddmCountEl = document.querySelector('#ddm-count');
-  const rescuePanel = document.querySelector('.rescue-panel');
-  const rescueHint = document.querySelector('#rescue-hint');
+  const ddmPanel = document.querySelector('.ddm-panel');
+  const ddmHint = document.querySelector('#ddm-hint');
+  const sswButton = document.querySelector('#ssw-button');
+  const sswCountEl = document.querySelector('#ssw-count');
+  const sswPanel = document.querySelector('.ssw-panel');
+  const sswHint = document.querySelector('#ssw-hint');
   const modeBanner = document.querySelector('#mode-banner');
+  const modeBannerMessage = document.querySelector('#skill-mode-message');
   const toastEl = document.querySelector('#toast');
   const comboEl = document.querySelector('#combo-pop');
   const gameOverEl = document.querySelector('#game-over');
-  const finalScoreEl = document.querySelector('#final-score');
+  const gameOverTitleEl = document.querySelector('#game-over-title');
+  const gameOverCopyEl = document.querySelector('#game-over-copy');
+  const endStateEyebrowEl = document.querySelector('#end-state-eyebrow');
+  const endStateBadgeEl = document.querySelector('#end-state-badge');
   const finalHighestEl = document.querySelector('#final-highest');
-  const debugChip = document.querySelector('#debug-chip');
+  const restartButtonEl = document.querySelector('#restart-button');
+  const continueButtonEl = document.querySelector('#continue-button');
+  const bossTargetEl = document.querySelector('#boss-target');
+  const bossHealthCardEl = document.querySelector('#boss-health-card');
+  const bossHpLabelEl = document.querySelector('#boss-hp-label');
+  const bossCoreEl = document.querySelector('#boss-core');
+  const playerHeroEl = document.querySelector('.player-hero');
+  const playerCaptionEl = document.querySelector('.player-caption');
+  const playerAttackOriginEl = document.querySelector('#player-attack-origin');
+  const bossHpTrackEl = document.querySelector('#boss-hp-track');
+  const bossHpFillEl = document.querySelector('#boss-hp-fill');
+  const bossHpValueEl = document.querySelector('#boss-hp-value');
+  const nextPanelEl = document.querySelector('.next-panel');
+  const attackEffectsEl = document.querySelector('#attack-effects');
   const themeOptionsEl = document.querySelector('#theme-options');
   const themeSwitcherEl = document.querySelector('#theme-switcher');
   const themeSelectors = new Map();
-  const recipeBubbles = [...document.querySelectorAll('.recipe-bubble')];
 
   let engine;
   let entities = new Map();
   let timers = new Set();
   let particles = [];
-  let score = 0;
-  let best = readBest();
   let currentRunHighestLevel = 0;
   let currentRunMaxMergeCount = 0;
-  const unlockedLevels = new Set();
-  let ddmCount = INITIAL_DDM;
+  let ddmUses = SKILL_CONFIG.initialUses;
+  let sswUses = SKILL_CONFIG.initialUses;
   let currentLevel = null;
   let nextLevel = randomDropLevel();
   let readyToDrop = true;
-  let ddmMode = false;
+  let activeSkill = null;
   let ddmBusy = false;
   let gameOver = false;
+  let gamePaused = false;
+  let bossDefeated = false;
+  let continuedAfterVictory = false;
+  let activeEndState = null;
+  const deferredVictoryMerges = [];
   let lastFrame = 0;
   let gameTime = 0;
   let physicsAccumulator = 0;
@@ -164,13 +107,37 @@
   let comboTimer = null;
   let resizeObserver;
 
+  const combat = window.DDMGameCombat.createCombatSystem({
+    config: BOSS_CONFIG,
+    bossTargetEl, bossHealthCardEl, bossHpLabelEl, bossHpTrackEl, bossHpFillEl, bossHpValueEl,
+    isPaused: () => gamePaused,
+    schedule,
+    formatNumber,
+    onBossDefeated: handleBossDefeat
+  });
+  const attackEffects = window.DDMGameEffects.createAttackEffects({
+    BOSS_CONFIG, attackEffectsEl, bossCoreEl, playerAttackOriginEl,
+    getLayoutMetrics, getGameMode: () => combat.mode, getBossHp: () => combat.bossHp,
+    isPaused: () => gamePaused, formatNumber, schedule,
+    applyCombatValue: (...args) => combat.applyCombatValue(...args), clamp
+  });
+  const { playPlayerAttackEffect, cancelUnresolvedBossAttacks, clearBossAttackEffects } = attackEffects;
+  const renderer = window.DDMGameRenderer.createRenderer({
+    canvas, ctx, nextPreviewCanvas, nextPreviewCtx, config: GAME_CONFIG, clamp,
+    getState: () => ({
+      gameTime, dangerSince, dangerLineWarning, particles, entities, activeSkill, gamePaused,
+      currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y
+    })
+  });
+
   if (!window.Matter) {
     showToast('物理引擎載入失敗，請確認網路連線後重新整理。', 8000);
     ddmButton.disabled = true;
+    sswButton.disabled = true;
     return;
   }
 
-  const { Engine, Bodies, Sleeping, Composite, Events } = Matter;
+  const { Engine, Bodies, Body, Sleeping, Composite, Events } = Matter;
   // Sleeping bodies can keep stale support after a DDM removal. The pile is small enough to simulate continuously.
   engine = Engine.create({ enableSleeping: false });
   engine.gravity.y = PHYSICS_GRAVITY;
@@ -183,12 +150,9 @@
   Events.on(engine, 'collisionStart', handleCollision);
   Events.on(engine, 'collisionActive', handleCollision);
 
-  bestEl.textContent = formatScore(best);
-  debugChip.hidden = !DEBUG;
   initializeThemeSelector();
-  updateScoreUI();
-  updateDDMUI();
-  updateJourneyUI();
+  combat.updateUI();
+  updateSkillUI();
   updateNextUI();
   resizeGame();
   resizeObserver = new ResizeObserver(resizeGame);
@@ -204,13 +168,14 @@
     resetPointerGesture();
     isPointerInsidePlayfield = false;
   });
-  ddmButton.addEventListener('click', toggleDDMMode);
-  document.querySelector('#cancel-ddm').addEventListener('click', exitDDMMode);
-  document.querySelector('#restart-button').addEventListener('click', restartGame);
+  ddmButton.addEventListener('click', () => toggleSkillMode('ddm'));
+  sswButton.addEventListener('click', () => toggleSkillMode('ssw'));
+  document.querySelector('#cancel-skill').addEventListener('click', cancelSkillMode);
+  restartButtonEl.addEventListener('click', restartGame);
+  continueButtonEl.addEventListener('click', continueAfterVictory);
   document.querySelector('#restart-top').addEventListener('click', restartGame);
   window.addEventListener('keydown', handleDebugKey);
 
-  if (DEBUG) showToast('開發快捷鍵：1–8 放入等級 · D 補充 DDM · R 重開', 3600);
   requestAnimationFrame(frame);
 
   function randomDropLevel() {
@@ -222,14 +187,6 @@
     if (highestReachedLevel >= 7) return 4;
     if (highestReachedLevel >= 5) return 3;
     return 2;
-  }
-
-  function readBest() {
-    try { return Number(localStorage.getItem(BEST_KEY)) || 0; } catch { return 0; }
-  }
-
-  function writeBest(value) {
-    try { localStorage.setItem(BEST_KEY, String(value)); } catch { /* Storage may be unavailable in private contexts. */ }
   }
 
   function createWalls() {
@@ -275,17 +232,9 @@
     return entity;
   }
 
-  function unlockLevel(level) {
-    if (!Number.isInteger(level) || level < 1 || level > MAX_LEVEL || unlockedLevels.has(level)) return;
-    unlockedLevels.add(level);
-    updateJourneyUI();
-  }
-
   function registerReachedLevel(level) {
-    unlockLevel(level);
     if (level > currentRunHighestLevel) {
       currentRunHighestLevel = level;
-      updateScoreUI();
     }
   }
 
@@ -314,7 +263,7 @@
 
   function updateThemeSelector() {
     const activeTheme = BALL_THEMES[currentThemeKey];
-    themeSwitcherEl?.setAttribute('aria-label', '球色系切換，目前為' + activeTheme.name);
+    themeSwitcherEl?.setAttribute('aria-label', '精華色系切換，目前為' + activeTheme.name);
     for (const [themeKey, selector] of themeSelectors) {
       const isActive = themeKey === currentThemeKey;
       selector.setAttribute('aria-pressed', String(isActive));
@@ -328,22 +277,11 @@
     MELANIN_LEVELS = BALL_THEMES[currentThemeKey].levels;
     updateDangerLineGeometry(getUIScale());
     updateThemeSelector();
-    updateJourneyUI();
-    draw();
-  }
-  function updateJourneyUI() {
-    recipeBubbles.forEach((bubble, index) => {
-      const level = MELANIN_LEVELS[index + 1];
-      const isUnlocked = unlockedLevels.has(index + 1);
-      bubble.style.backgroundColor = level.color;
-      bubble.style.color = level.labelColor;
-      bubble.classList.toggle('unlocked', isUnlocked);
-      bubble.classList.toggle('locked', !isUnlocked);
-    });
+    renderer.draw();
   }
 
   function spawnNextMelanin() {
-    if (gameOver) return;
+    if (gamePaused) return;
     currentLevel = nextLevel;
     const radius = MELANIN_LEVELS[currentLevel].diameter / 2;
     const spawnX = isPointerInsidePlayfield ? lastValidDropX : PLAYFIELD_CENTER_X;
@@ -358,7 +296,7 @@
     if (currentLevel == null) spawnNextMelanin();
     nextEl.textContent = `LV ${nextLevel}`;
     nextPreviewEl.dataset.level = String(nextLevel);
-    nextPreviewEl.setAttribute('aria-label', `下一顆：Lv ${nextLevel}`);
+    nextPreviewEl.setAttribute('aria-label', `下一顆 DDM 精華：Lv ${nextLevel}`);
   }
 
   function getUIScale(frameWidth = wrapper.clientWidth) {
@@ -367,15 +305,15 @@
 
   function updateDangerLineGeometry(uiScale) {
     // Drawing and Game Over use the same logical Y value; resize only changes its rendered scale.
-    lv8Radius = MELANIN_LEVELS[DANGER_REFERENCE_LEVEL].diameter / 2;
-    lv8Diameter = lv8Radius * 2;
-    dangerZoneHeight = lv8Diameter * DANGER_ZONE_DIAMETER_MULTIPLIER;
+    secondHighestRadius = MELANIN_LEVELS[SECOND_HIGHEST_LEVEL].diameter / 2;
+    secondHighestDiameter = secondHighestRadius * 2;
+    dangerZoneHeight = secondHighestDiameter * DANGER_ZONE_DIAMETER_MULTIPLIER;
     DANGER_LINE_Y = PLAYFIELD_BOTTOM - dangerZoneHeight;
-    const debugKey = String(uiScale) + ':' + lv8Diameter;
+    const debugKey = String(uiScale) + ':' + secondHighestDiameter;
     if (DEBUG && debugKey !== lastDangerDebugKey) {
       console.debug('[Melanin Merge] danger line geometry', {
-        uiScale, playfieldHeight: PLAYFIELD_HEIGHT, playfieldBottom: PLAYFIELD_BOTTOM, lv8Radius,
-        lv8Diameter, dangerZoneHeight, dangerLineY: DANGER_LINE_Y
+        uiScale, playfieldHeight: PLAYFIELD_HEIGHT, playfieldBottom: PLAYFIELD_BOTTOM, secondHighestRadius,
+        secondHighestDiameter, dangerZoneHeight, dangerLineY: DANGER_LINE_Y
       });
       lastDangerDebugKey = debugKey;
     }
@@ -405,6 +343,27 @@
     };
   }
 
+  function updateCombatLayout(metrics = getLayoutMetrics()) {
+    const { frameRect, playfieldRect } = metrics;
+    if (!frameRect.width || !frameRect.height) return;
+
+    const leftZoneCenterX = (frameRect.left + playfieldRect.left) / 2;
+    const leftZoneCenterPercent = ((leftZoneCenterX - frameRect.left) / frameRect.width) * 100;
+    for (const characterEl of [bossTargetEl, playerHeroEl]) {
+      characterEl.style.left = `${leftZoneCenterPercent}%`;
+    }
+
+    const nextRect = nextPanelEl.getBoundingClientRect();
+    bossTargetEl.style.top = `${((nextRect.top - frameRect.top) / frameRect.height) * 100}%`;
+
+    const sswButtonRect = sswButton.getBoundingClientRect();
+    playerHeroEl.style.bottom = 'auto';
+    const heroTop = playerHeroEl.getBoundingClientRect().top;
+    const captionBottomOffset = playerCaptionEl.getBoundingClientRect().bottom - heroTop;
+    const playerTop = sswButtonRect.bottom - frameRect.top - captionBottomOffset;
+    playerHeroEl.style.top = `${(playerTop / frameRect.height) * 100}%`;
+  }
+
   function isPointInsidePlayfield(clientX, clientY) {
     const { playfieldRect } = getLayoutMetrics();
     return clientX >= playfieldRect.left
@@ -426,7 +385,7 @@
   }
 
   function handlePointerDown(event) {
-    if (gameOver || activePointerId != null || event.button !== 0) return;
+    if (gamePaused || activePointerId != null || event.button !== 0) return;
     activePointerId = event.pointerId;
     activePointerType = event.pointerType || 'mouse';
     pointerDownStartedInsidePlayfield = isPointInsidePlayfield(event.clientX, event.clientY);
@@ -445,14 +404,14 @@
     const pointerType = activePointerType;
     resetPointerGesture();
     if (!endedInside) isPointerInsidePlayfield = false;
-    if (!startedInside || !endedInside || gameOver) return;
+    if (!startedInside || !endedInside || gamePaused) return;
 
     event.preventDefault();
     const point = toLogicalPoint(event);
     updateDropPreviewPosition(point);
-    if (ddmMode) {
+    if (activeSkill) {
       const target = findMelaninAt(point.x, point.y);
-      if (target) useDDM(target);
+      if (target) useSelectedSkill(target);
       return;
     }
     dropMelanin(currentDropX, pointerType);
@@ -488,22 +447,23 @@
   }
 
   function dropMelanin(x, pointerType = 'mouse') {
-    if (gameOver || ddmMode || !readyToDrop || currentLevel == null) return;
+    if (gamePaused || activeSkill || !readyToDrop || currentLevel == null) return;
     const level = currentLevel;
     const radius = MELANIN_LEVELS[level].diameter / 2;
     createMelanin(level, clamp(x, GAME_LEFT + radius + 3, GAME_RIGHT - radius - 3), DROP_Y + radius, {});
     readyToDrop = false;
+    playPlayerAttackEffect(DROP_DAMAGE, 'drop');
     currentLevel = null;
     // Touch has no hover position to carry forward; each newly prepared piece starts centered.
     if (pointerType === 'touch') isPointerInsidePlayfield = false;
     spawnNextMelanin();
     schedule(() => {
-      if (!gameOver) readyToDrop = true;
+      if (!gamePaused) readyToDrop = true;
     }, DROP_COOLDOWN);
   }
 
   function handleCollision(event) {
-    if (gameOver) return;
+    if (gamePaused) return;
     for (const pair of event.pairs) {
       const first = entities.get(pair.bodyA.id);
       const second = entities.get(pair.bodyB.id);
@@ -524,17 +484,22 @@
   }
 
   function mergeMelanin(first, second, nextLevelValue, x, y) {
-    if (gameOver || !entities.has(first.body.id) || !entities.has(second.body.id)) return;
+    if (!entities.has(first.body.id) || !entities.has(second.body.id)) return;
+    if (gamePaused) {
+      if (activeEndState === 'victory') deferredVictoryMerges.push([first, second, nextLevelValue, x, y]);
+      return;
+    }
     removeEntity(first, false);
     removeEntity(second, false);
     wakeAllMelaninBodies();
-    addScore(SCORE_TABLE[first.level] || 0);
     registerCombo();
     const radius = MELANIN_LEVELS[nextLevelValue].diameter / 2;
     const safeX = clamp(x, GAME_LEFT + radius + 2, GAME_RIGHT - radius - 2);
     const safeY = clamp(y, GAME_TOP + radius + 4, GAME_FLOOR - radius - 4);
+    const damage = calculateMergeDamage(first.level, nextLevelValue);
+    playPlayerAttackEffect(damage, 'merge');
     if (nextLevelValue === MAX_LEVEL) {
-      handleMaxMelanin(safeX, safeY);
+      resolveMaxBall(safeX, safeY, 'merge');
       return;
     }
     const result = createMelanin(nextLevelValue, safeX, safeY);
@@ -542,24 +507,33 @@
     emitParticles(safeX, safeY, '#efc782', 9);
   }
 
-  function handleMaxMelanin(x, y) {
-    addScore(MAX_MELANIN_BONUS);
+  function resolveMaxBall(x, y, source) {
     const maxBlob = createMelanin(MAX_LEVEL, x, y, { special: true });
     maxBlob.completionCounted = false;
     maxBlob.stateAt = gameTime;
     emitParticles(x, y, '#f6d68e', 25);
-    showToast('成功淡化！　Lv 9 完成目標', 1500, true);
+    showToast(source === 'ssw' ? 'SSW+1 強化抵達 MAX！' : 'MAX DDM 精華合成完成！', 1500, true);
     schedule(() => {
       if (!entities.has(maxBlob.body.id) || maxBlob.completionCounted) return;
       if (!removeEntity(maxBlob)) return;
       maxBlob.completionCounted = true;
-      const wasFull = ddmCount >= MAX_DDM;
-      addDDM();
-      currentRunMaxMergeCount += 1;
-      if (wasFull) showToast('DDM 已補滿！', 1800, true);
-      else showToast('DDM +1　淡化救援已補充', 1900, true);
+      if (source === 'merge') grantMergeMaxReward();
       emitParticles(x, y, '#82d8bd', 19);
     }, MAX_PRESENTATION_DURATION);
+  }
+
+  function grantMergeMaxReward() {
+    currentRunMaxMergeCount += 1;
+    const rewardSkill = window.DDMGameSkills.chooseMaxRewardSkill(ddmUses, sswUses, SKILL_CONFIG.maxUses);
+    if (!rewardSkill) {
+      showToast('MAX 合成獎勵：技能次數皆已達上限', 2100, true);
+      return;
+    }
+
+    addSkillUses(rewardSkill);
+    updateSkillUI();
+    const rewardLabel = rewardSkill === 'ddm' ? 'DDM' : 'SSW+1';
+    showToast('MAX 合成獎勵：' + rewardLabel + ' 次數 +1（目前 ×' + getSkillUses(rewardSkill) + '）', 2100, true);
   }
 
   function registerCombo() {
@@ -600,12 +574,8 @@
       const dx = x - body.position.x;
       const dy = y - body.position.y;
       if (dx * dx + dy * dy > (radius * 1.12) ** 2) continue;
-      if (entity.level === MAX_LEVEL || entity.special) {
-        showToast('最大黑色素需要透過合成完成淡化');
-        return null;
-      }
-      if (state !== 'active') {
-        showToast('這顆黑色素正在合成，等一下再試！');
+      if (state !== 'active' && state !== 'special') {
+        showToast('這顆 DDM 精華正在合成，等一下再試！');
         return null;
       }
       return entity;
@@ -613,88 +583,153 @@
     return null;
   }
 
-  function enterDDMMode() {
-    if (gameOver || ddmBusy || ddmCount <= 0) return;
-    ddmMode = true;
-    canvas.classList.add('ddm-selecting');
+  function getSkillUses(skill) {
+    return skill === 'ddm' ? ddmUses : sswUses;
+  }
+
+  function setSkillUses(skill, uses) {
+    if (skill === 'ddm') ddmUses = uses;
+    else sswUses = uses;
+  }
+
+  function addSkillUses(skill, amount = 1) {
+    const before = getSkillUses(skill);
+    setSkillUses(skill, Math.min(SKILL_CONFIG.maxUses, before + amount));
+    return getSkillUses(skill) > before;
+  }
+
+  function toggleSkillMode(skill) {
+    if (gamePaused || ddmBusy) return;
+    if (activeSkill === skill) {
+      cancelSkillMode();
+      return;
+    }
+    if (getSkillUses(skill) <= 0) {
+      showToast(`${skill === 'ddm' ? '直接使用DDM' : '使用SSW+1'} 次數用完了；MAX 合成可補充技能次數！`);
+      return;
+    }
+    activeSkill = skill;
+    canvas.classList.toggle('ddm-selecting', skill === 'ddm');
+    canvas.classList.toggle('ssw-selecting', skill === 'ssw');
+    modeBannerMessage.textContent = skill === 'ddm'
+      ? '選取一顆非 MAX DDM 精華，轉為攻擊能量（標準傷害的 25%）'
+      : '選取一顆 DDM 精華直接升級一階，不造成傷害';
     modeBanner.hidden = false;
-    rescuePanel.classList.add('is-active');
-    updateDDMUI();
+    updateSkillUI();
   }
 
-  function exitDDMMode() {
-    ddmMode = false;
-    canvas.classList.remove('ddm-selecting');
+  function cancelSkillMode() {
+    activeSkill = null;
+    canvas.classList.remove('ddm-selecting', 'ssw-selecting');
     modeBanner.hidden = true;
-    rescuePanel.classList.remove('is-active');
-    updateDDMUI();
+    updateSkillUI();
   }
 
-  function toggleDDMMode() {
-    if (ddmMode) { exitDDMMode(); return; }
-    if (ddmCount <= 0) { showToast('DDM 救援次數用完了，合成 Lv 9 來補充吧！'); return; }
-    enterDDMMode();
+  function useSelectedSkill(target) {
+    if (activeSkill === 'ddm') useDDM(target);
+    else if (activeSkill === 'ssw') useSSW(target);
   }
 
   function useDDM(target) {
-    if (gameOver || ddmBusy || !entities.has(target.body.id)) return;
-    if (target.level === MAX_LEVEL || target.special) {
-      showToast('最大黑色素需要透過合成完成淡化');
+    if (gamePaused || ddmBusy || activeSkill !== 'ddm' || !entities.has(target.body.id)) return;
+    if (target.level >= MAX_LEVEL || target.special) {
+      showToast('最高等級精華無法直接使用DDM，請選取非 MAX 精華');
       return;
     }
-    if (target.state !== 'active' || ddmCount <= 0) return;
+    if (target.state !== 'active' || ddmUses <= 0) return;
+    const damage = calculateDirectDdmDamage(target.level);
     target.state = 'removing';
     target.stateAt = gameTime;
-    // Stop supporting or colliding immediately while the fade animation plays.
     target.body.isSensor = true;
     ddmBusy = true;
-    ddmCount -= 1;
-    exitDDMMode();
-    updateDDMUI();
+    ddmUses -= 1;
+    const x = target.body.position.x;
+    const y = target.body.position.y;
+    cancelSkillMode();
+    updateSkillUI();
     wakeAllMelaninBodies();
-    showToast('DDM 淡化中…');
-    emitParticles(target.body.position.x, target.body.position.y, '#83d7bf', 12);
+    emitParticles(x, y, '#83d7bf', 12);
+    playPlayerAttackEffect(damage, 'ddm');
+    const impactCopy = combat.mode === 'whiteScore'
+      ? `WHITE SCORE +${formatNumber(damage)}`
+      : `−${formatNumber(damage)} HP`;
+    showToast(`DDM 精華轉化為攻擊能量：${impactCopy}`, 1600, true);
     schedule(() => {
       if (entities.has(target.body.id)) removeEntity(target);
       ddmBusy = false;
-      updateDDMUI();
-      showToast('空間整理好了，繼續合成吧！', 1400, true);
+      updateSkillUI();
     }, DDM_FADE_DURATION);
   }
 
-  function addDDM() {
-    const previous = ddmCount;
-    ddmCount = Math.min(MAX_DDM, ddmCount + 1);
-    updateDDMUI();
-    return ddmCount > previous;
-  }
-
-  function updateDDMUI() {
-    ddmCountEl.textContent = `× ${ddmCount}`;
-    ddmButton.disabled = ddmCount <= 0 || ddmBusy || gameOver;
-    ddmButton.classList.toggle('is-active', ddmMode);
-    ddmButton.setAttribute('aria-pressed', String(ddmMode));
-    rescuePanel.classList.toggle('is-active', ddmMode);
-    rescueHint.textContent = ddmMode ? '再次點擊按鈕即可取消' : ddmCount <= 0 ? `合成 Lv ${MAX_LEVEL} 可補充 DDM` : '點擊後選擇場上的黑色素';
-  }
-
-  function addScore(points) {
-    score += points;
-    if (score > best) {
-      best = score;
-      writeBest(best);
+  function useSSW(target) {
+    if (gamePaused || activeSkill !== 'ssw' || !entities.has(target.body.id)) return;
+    if (target.level >= MAX_LEVEL || target.special) {
+      showToast('已是最高等級');
+      return;
     }
-    updateScoreUI();
+    if (target.state !== 'active' || sswUses <= 0) return;
+    const nextLevelValue = target.level + 1;
+    const { x, y } = target.body.position;
+    const velocity = { x: target.body.velocity.x, y: target.body.velocity.y };
+    const angle = target.body.angle;
+    const angularVelocity = target.body.angularVelocity;
+    if (!removeEntity(target, false)) return;
+    sswUses -= 1;
+    cancelSkillMode();
+    updateSkillUI();
+    wakeAllMelaninBodies();
+    emitParticles(x, y, '#b0a0f1', 18);
+    if (nextLevelValue === MAX_LEVEL) {
+      resolveMaxBall(x, y, 'ssw');
+      return;
+    }
+    const upgraded = createMelanin(nextLevelValue, x, y);
+    Body.setAngle(upgraded.body, angle);
+    Body.setVelocity(upgraded.body, velocity);
+    Body.setAngularVelocity(upgraded.body, angularVelocity);
+    upgraded.popFrom = gameTime;
+    upgraded.lastUpgradeSource = 'ssw';
+    showToast(`SSW+1 強化完成：Lv ${target.level} → Lv ${nextLevelValue}`, 1600, true);
   }
 
-  function updateScoreUI() {
-    scoreEl.textContent = formatScore(score);
-    bestEl.textContent = formatScore(best);
-    highestEl.textContent = `LV ${currentRunHighestLevel}`;
+  function updateSkillUI() {
+    const ddmSelected = activeSkill === 'ddm';
+    const sswSelected = activeSkill === 'ssw';
+    ddmCountEl.textContent = `× ${ddmUses}`;
+    sswCountEl.textContent = `× ${sswUses}`;
+    ddmButton.disabled = ddmUses <= 0 || ddmBusy || gamePaused;
+    sswButton.disabled = sswUses <= 0 || ddmBusy || gamePaused;
+    ddmButton.classList.toggle('is-active', ddmSelected);
+    sswButton.classList.toggle('is-active', sswSelected);
+    ddmButton.setAttribute('aria-pressed', String(ddmSelected));
+    sswButton.setAttribute('aria-pressed', String(sswSelected));
+    ddmPanel.classList.toggle('is-active', ddmSelected);
+    sswPanel.classList.toggle('is-active', sswSelected);
+    ddmHint.textContent = ddmSelected
+      ? '點選非 MAX 精華，造成其標準傷害的 25%'
+      : ddmUses <= 0 ? 'MAX 合成可補充技能次數' : '選取精華，轉化為攻擊能量';
+    sswHint.textContent = sswSelected
+      ? '點選精華升級一階，不造成傷害'
+      : sswUses <= 0 ? 'MAX 合成可補充技能次數' : '選取一顆精華提升一級';
   }
 
-  function formatScore(value) {
-    return Math.floor(value).toLocaleString('en-US');
+  function calculateMergeScore(level) {
+    return SCORE_TABLE[level] || 0;
+  }
+
+  function calculateMergeDamage(level, resultingLevel) {
+    const mergeScore = calculateMergeScore(level);
+    const maxLevelCompletionBonus = resultingLevel === MAX_LEVEL ? MAX_MELANIN_BONUS : 0;
+    return mergeScore + maxLevelCompletionBonus;
+  }
+
+  function calculateDirectDdmDamage(level) {
+    const standardDamage = calculateMergeScore(level);
+    return Math.max(0, standardDamage * SKILL_CONFIG.directDdmDamageMultiplier);
+  }
+
+  function formatNumber(value) {
+    return Number(value).toLocaleString('en-US', { maximumFractionDigits: 2 });
   }
 
   function showToast(message, duration = 1450, success = false) {
@@ -741,30 +776,85 @@
     if (gameTime - dangerSince >= GAME_OVER_DELAY) triggerGameOver();
   }
 
-  function getGameOverMessage() {
-    if (currentRunMaxMergeCount >= 2) return '多次完成最高等級！下次再刷新你的紀錄吧！';
-    if (currentRunMaxMergeCount === 1) return '最高等級已完成！下次挑戰更多次吧！';
-    return '休息一下，再來挑戰最高等級吧。';
+  function showEndStateModal(type) {
+    const content = {
+      defeat: {
+        badge: '↻', eyebrow: '再接再厲', title: '好可惜，再挑戰一次吧！',
+        copy: '黑色素暴君還沒被擊敗，重新整隊後再來一戰。', canContinue: false
+      },
+      victory: {
+        badge: '✦', eyebrow: '挑戰完成', title: '勝利！你擊敗了黑色素暴君！',
+        copy: 'DDM 精華能量成功發揮效果。你可以繼續挑戰，或重開一局。', canContinue: true
+      },
+      continued: {
+        badge: '★', eyebrow: '續戰完成', title: '表現很棒！',
+        copy: `你已經擊敗黑色素暴君，還在勝利後繼續奮戰，累積 WHITE SCORE ${formatNumber(combat.whiteScore)}。`, canContinue: false
+      }
+    }[type];
+    if (!content) return;
+
+    activeEndState = type;
+    endStateBadgeEl.textContent = content.badge;
+    endStateEyebrowEl.textContent = content.eyebrow;
+    gameOverTitleEl.textContent = content.title;
+    gameOverCopyEl.textContent = content.copy;
+    finalHighestEl.textContent = `LV ${currentRunHighestLevel}`;
+    continueButtonEl.hidden = !content.canContinue;
+    gameOverEl.hidden = false;
+    (content.canContinue ? continueButtonEl : restartButtonEl).focus({ preventScroll: true });
   }
 
-  function triggerGameOver() {
-    if (gameOver) return;
-    gameOver = true;
+  function handleBossDefeat(impactEffect) {
+    if (combat.mode !== 'boss' || bossDefeated) return;
+    bossDefeated = true;
+    gamePaused = true;
     dangerSince = null;
     dangerLineWarning = false;
     resetPointerGesture();
     isPointerInsidePlayfield = false;
-    // Timed clean-up still runs (for example, an already-earned Lv 9 reward).
-    // Any pending drop checks gameOver before preparing a new piece; restartGame clears all timers.
-    ddmMode = false;
+    activeSkill = null;
     ddmBusy = false;
     modeBanner.hidden = true;
-    canvas.classList.remove('ddm-selecting');
-    finalScoreEl.textContent = formatScore(score);
-    finalHighestEl.textContent = `LV ${currentRunHighestLevel}`;
-    document.querySelector('.over-copy').textContent = getGameOverMessage();
-    gameOverEl.hidden = false;
-    updateDDMUI();
+    canvas.classList.remove('ddm-selecting', 'ssw-selecting');
+    cancelUnresolvedBossAttacks(impactEffect);
+    showEndStateModal('victory');
+    updateSkillUI();
+  }
+
+  function triggerGameOver() {
+    if (gameOver || gamePaused) return;
+    gameOver = true;
+    gamePaused = true;
+    dangerSince = null;
+    dangerLineWarning = false;
+    resetPointerGesture();
+    isPointerInsidePlayfield = false;
+    // Timed clean-up still runs (for example, an already-earned MAX merge reward).
+    // Pending gameplay callbacks check gamePaused; restartGame clears all timers.
+    activeSkill = null;
+    ddmBusy = false;
+    modeBanner.hidden = true;
+    canvas.classList.remove('ddm-selecting', 'ssw-selecting');
+    cancelUnresolvedBossAttacks();
+    showEndStateModal(continuedAfterVictory ? 'continued' : 'defeat');
+    updateSkillUI();
+  }
+
+  function continueAfterVictory() {
+    if (activeEndState !== 'victory' || !bossDefeated) return;
+    activeEndState = null;
+    continuedAfterVictory = true;
+    combat.continueAfterVictory();
+    gameOver = false;
+    gamePaused = false;
+    gameOverEl.hidden = true;
+    physicsAccumulator = 0;
+    lastFrame = performance.now();
+    if (currentLevel == null) spawnNextMelanin();
+    readyToDrop = true;
+    const pendingMerges = deferredVictoryMerges.splice(0);
+    updateSkillUI();
+    for (const merge of pendingMerges) mergeMelanin(...merge);
   }
 
   function restartGame() {
@@ -776,11 +866,18 @@
     Engine.clear(engine);
     entities.clear();
     particles = [];
-    score = 0;
+    deferredVictoryMerges.length = 0;
+    clearBossAttackEffects();
+    combat.reset();
+    bossDefeated = false;
+    continuedAfterVictory = false;
+    activeEndState = null;
+    bossTargetEl.classList.remove('is-hit');
+    combat.updateUI();
     currentRunHighestLevel = 0;
-    unlockedLevels.clear();
     currentRunMaxMergeCount = 0;
-    ddmCount = INITIAL_DDM;
+    ddmUses = SKILL_CONFIG.initialUses;
+    sswUses = SKILL_CONFIG.initialUses;
     currentLevel = null;
     nextLevel = randomDropLevel();
     isPointerInsidePlayfield = false;
@@ -788,9 +885,10 @@
     lastValidDropX = PLAYFIELD_CENTER_X;
     currentDropX = PLAYFIELD_CENTER_X;
     readyToDrop = true;
-    ddmMode = false;
+    activeSkill = null;
     ddmBusy = false;
     gameOver = false;
+    gamePaused = false;
     dangerSince = null;
     dangerLineWarning = false;
     lastMergeTime = -Infinity;
@@ -801,11 +899,10 @@
     toastEl.hidden = true;
     modeBanner.hidden = true;
     gameOverEl.hidden = true;
-    canvas.classList.remove('ddm-selecting');
+    continueButtonEl.hidden = true;
+    canvas.classList.remove('ddm-selecting', 'ssw-selecting');
     createWalls();
-    updateDDMUI();
-    updateScoreUI();
-    updateJourneyUI();
+    updateSkillUI();
     updateNextUI();
   }
 
@@ -814,10 +911,13 @@
     const targetName = event.target?.tagName;
     if (targetName === 'INPUT' || targetName === 'TEXTAREA' || event.target?.isContentEditable) return;
     if (event.key.toLowerCase() === 'r') { restartGame(); return; }
+    if (gamePaused) return;
+    if (event.key.toLowerCase() === 'g') { triggerGameOver(); return; }
     if (event.key.toLowerCase() === 'd') {
-      const before = ddmCount;
-      addDDM();
-      showToast(before < ddmCount ? `DDM +1　目前 ×${ddmCount}` : 'DDM 已補滿！', 1250, before < ddmCount);
+      const gainedDdm = addSkillUses('ddm');
+      const gainedSsw = addSkillUses('ssw');
+      updateSkillUI();
+      showToast(gainedDdm || gainedSsw ? `測試補充技能次數：DDM ×${ddmUses}・SSW+1 ×${sswUses}` : '技能次數已達上限！', 1250, gainedDdm || gainedSsw);
       return;
     }
     const level = Number(event.key);
@@ -825,13 +925,16 @@
   }
 
   function debugSpawn(level) {
-    if (gameOver) return;
+    if (gamePaused) return;
     const radius = MELANIN_LEVELS[level].diameter / 2;
-    const x = LOGICAL_WIDTH / 2 + debugSide * Math.min(radius * 0.62, 52);
-    debugSide *= -1;
-    const entity = createMelanin(level, clamp(x, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4), Math.round(LOGICAL_HEIGHT * LAYOUT.debugSpawnY));
+    let spawnX = currentDropX;
+    if (!isPointerInsidePlayfield) {
+      spawnX = LOGICAL_WIDTH / 2 + debugSide * Math.min(radius * 0.62, 52);
+      debugSide *= -1;
+    }
+    const entity = createMelanin(level, clamp(spawnX, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4), Math.round(LOGICAL_HEIGHT * LAYOUT.debugSpawnY));
     entity.bornAt = gameTime - 1500;
-    showToast(`DEBUG：放入 Lv ${level}`, 900);
+    showToast(`Lv ${level} DDM 精華`, 900);
   }
 
   function resizeGame() {
@@ -846,24 +949,16 @@
     canvas.width = Math.round(LOGICAL_WIDTH * renderScale);
     canvas.height = Math.round(LOGICAL_HEIGHT * renderScale);
     ctx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
-    resizeNextPreview();
+    renderer.resizeNextPreview();
+    updateCombatLayout(getLayoutMetrics());
     // Matter.js stays in the normalized reference frame; the 16:9 wrapper scales visuals and collisions together.
-    // Resizing only refreshes render metrics, so score, bodies, DDM, theme, and progress remain untouched.
-  }
-
-  function resizeNextPreview() {
-    if (!nextPreviewCanvas || !nextPreviewCtx) return;
-    const rect = nextPreviewCanvas.getBoundingClientRect();
-    const pixelRatio = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-    nextPreviewCanvas.width = Math.max(1, Math.round(rect.width * pixelRatio));
-    nextPreviewCanvas.height = Math.max(1, Math.round(rect.height * pixelRatio));
-    nextPreviewCtx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    // Resizing only refreshes render metrics, so bodies, boss HP, DDM, and theme remain untouched.
   }
 
   function frame(now) {
     const delta = lastFrame ? Math.min(MAX_FRAME_DELTA, Math.max(0, now - lastFrame)) : PHYSICS_TIMESTEP;
     lastFrame = now;
-    if (!gameOver) {
+    if (!gamePaused) {
       gameTime += delta;
       physicsAccumulator += delta;
       let physicsSteps = 0;
@@ -876,7 +971,7 @@
       updateParticles(delta);
       checkGameOver();
     }
-    draw();
+    renderer.draw();
     requestAnimationFrame(frame);
   }
 
@@ -891,440 +986,5 @@
     }
   }
 
-  function draw() {
-    ctx.clearRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
-    drawBackgroundAccents();
-    drawBowl();
-    drawParticles();
-    drawEntities();
-    drawDropPreview();
-    drawNextPreview();
-  }
-
-  function drawNextPreview() {
-    if (!nextPreviewCtx || !nextPreviewCanvas || !MELANIN_LEVELS[nextLevel]) return;
-    const width = nextPreviewCanvas.clientWidth;
-    const height = nextPreviewCanvas.clientHeight;
-    if (!width || !height) return;
-    nextPreviewCtx.clearRect(0, 0, width, height);
-    const radius = Math.min(MELANIN_LEVELS[nextLevel].diameter / 2, Math.min(width, height) * .3);
-    drawMelanin(width / 2, height / 2, nextLevel, radius, 1, 1, false, 0, nextPreviewCtx);
-  }
-
-  function drawBackgroundAccents() {
-    ctx.save();
-    ctx.globalAlpha = 0.28;
-    for (let i = 0; i < 9; i += 1) {
-      const x = 330 + i * 122;
-      const y = 160 + (i % 3) * 22;
-      ctx.beginPath();
-      ctx.arc(x, y, 2 + (i % 2), 0, Math.PI * 2);
-      ctx.fillStyle = i % 2 ? '#efd6c5' : '#c6e5d7';
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-
-  function drawBowl() {
-    const left = GAME_LEFT - BOWL_SIDE_PADDING;
-    const right = GAME_RIGHT + BOWL_SIDE_PADDING;
-    const top = GAME_TOP - BOWL_TOP_PADDING;
-    const bottom = PLAYFIELD_BOTTOM;
-    const width = right - left;
-    const height = bottom - top;
-
-    ctx.save();
-    ctx.shadowColor = 'rgba(129, 99, 82, .12)';
-    ctx.shadowBlur = 35;
-    ctx.shadowOffsetY = 12;
-    roundedRect(ctx, left, top, width, height, 34);
-    const glass = ctx.createLinearGradient(left, top, right, bottom);
-    glass.addColorStop(0, 'rgba(242,253,255,.58)');
-    glass.addColorStop(.48, 'rgba(225,248,248,.34)');
-    glass.addColorStop(1, 'rgba(218,245,218,.35)');
-    ctx.fillStyle = glass;
-    ctx.fill();
-    ctx.shadowColor = 'transparent';
-    ctx.strokeStyle = 'rgba(80, 157, 154, .72)';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.restore();
-
-    ctx.save();
-    roundedRect(ctx, left, top, width, height, 34);
-    ctx.clip();
-    const inner = ctx.createLinearGradient(left, top, right, bottom);
-    inner.addColorStop(0, 'rgba(243,253,255,.16)');
-    inner.addColorStop(1, 'rgba(205,238,208,.2)');
-    ctx.fillStyle = inner;
-    ctx.fillRect(left, top, width, height);
-
-    // A few quiet bubbles make the play area feel like a clear glass dish.
-    for (let i = 0; i < 14; i += 1) {
-      const x = left + 50 + ((i * 197) % (width - 100));
-      const y = top + 82 + ((i * 113) % (height - 150));
-      ctx.beginPath();
-      ctx.arc(x, y, 2 + (i % 3), 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,255,255,.38)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    // Glass rim, sides, and cushioned floor are decorative counterparts of the Matter.js walls.
-    ctx.save();
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(255,255,255,.91)';
-    ctx.lineWidth = 7;
-    ctx.beginPath();
-    ctx.moveTo(left + 28, top + 7);
-    ctx.lineTo(right - 28, top + 7);
-    ctx.stroke();
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = 'rgba(169,218,204,.86)';
-    ctx.beginPath();
-    ctx.moveTo(GAME_LEFT, top + 24);
-    ctx.lineTo(GAME_LEFT, GAME_FLOOR - 6);
-    ctx.moveTo(GAME_RIGHT, top + 24);
-    ctx.lineTo(GAME_RIGHT, GAME_FLOOR - 6);
-    ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,.76)';
-    roundedRect(ctx, GAME_LEFT - 6, GAME_FLOOR - 6, GAME_RIGHT - GAME_LEFT + 12, 18, 9);
-    ctx.fill();
-    ctx.restore();
-
-    drawDangerLine();
-  }
-
-  function drawDangerLine() {
-    ctx.save();
-    const warningFlash = dangerLineWarning && dangerSince != null
-      && Math.floor((gameTime - dangerSince) / 300) % 2 === 1;
-    ctx.globalAlpha = 1;
-    ctx.setLineDash([9, 10]);
-    ctx.lineWidth = warningFlash ? 4 : 2;
-    ctx.strokeStyle = warningFlash ? '#ff3b30' : 'rgba(225, 124, 99, .82)';
-    if (warningFlash) {
-      ctx.shadowColor = 'rgba(255, 59, 48, .8)';
-      ctx.shadowBlur = 9;
-    }
-    ctx.beginPath();
-    ctx.moveTo(GAME_LEFT + 18, DANGER_LINE_Y);
-    ctx.lineTo(GAME_RIGHT - 18, DANGER_LINE_Y);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    ctx.globalAlpha = 1;
-    ctx.setLineDash([]);
-    ctx.font = '700 ' + DANGER_LABEL_FONT_SIZE + 'px "DM Sans", "Noto Sans TC", sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    const label = '危險線';
-    const textWidth = ctx.measureText(label).width;
-    roundedRect(ctx, GAME_LEFT + 23, DANGER_LINE_Y - 16, textWidth + 20, 31, 15);
-    ctx.fillStyle = warningFlash ? 'rgba(255,235,232,.98)' : 'rgba(255,255,255,.94)';
-    ctx.fill();
-    ctx.fillStyle = warningFlash ? '#ff3b30' : '#aa5b4d';
-    ctx.fillText(label, GAME_LEFT + 33, DANGER_LINE_Y);
-    ctx.restore();
-  }
-
-  function drawEntities() {
-    const ordered = [...entities.values()].sort((a, b) => a.body.position.y - b.body.position.y);
-    for (const entity of ordered) {
-      if (!entities.has(entity.body.id)) continue;
-      const x = entity.body.position.x;
-      const y = entity.body.position.y;
-      let alpha = 1;
-      let scale = 1;
-      if (entity.state === 'removing') {
-        const progress = clamp((gameTime - entity.stateAt) / DDM_FADE_DURATION, 0, 1);
-        alpha = 1 - progress;
-        scale = 1 - progress * 0.68;
-      } else if (entity.state === 'special') {
-        const progress = clamp((gameTime - entity.stateAt) / MAX_PRESENTATION_DURATION, 0, 1);
-        if (progress < .55) scale = 1 + .42 * easeOutCubic(progress / .55);
-        else { const tail = (progress - .55) / .45; scale = 1.42 * (1 - easeOutCubic(tail)); alpha = 1 - easeOutCubic(tail); }
-      } else if (entity.state === 'merging') {
-        const progress = clamp((gameTime - entity.stateAt) / MERGE_DELAY, 0, 1);
-        scale = 1 + .12 * Math.sin(progress * Math.PI);
-      } else if (entity.popFrom != null) {
-        const progress = clamp((gameTime - entity.popFrom) / 280, 0, 1);
-        scale = .78 + .22 * easeOutBack(progress);
-        if (progress >= 1) entity.popFrom = null;
-      }
-      drawMelanin(x, y, entity.level, entity.radius, scale, alpha, entity.state === 'special', gameTime - entity.stateAt);
-      if (ddmMode && entity.state === 'active' && entity.level < MAX_LEVEL) drawSelectableRing(x, y, entity.radius);
-    }
-  }
-
-  function drawSelectableRing(x, y, radius) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(x, y, radius + 7, 0, Math.PI * 2);
-    ctx.setLineDash([5, 6]);
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = 'rgba(95, 190, 161, .76)';
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function drawDropPreview() {
-    if (gameOver || currentLevel == null) return;
-    const radius = MELANIN_LEVELS[currentLevel].diameter / 2;
-    const x = clamp(currentDropX, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4);
-    ctx.save();
-    ctx.setLineDash([4, 8]);
-    ctx.strokeStyle = 'rgba(145, 111, 96, .32)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(x, DROP_Y + radius + 9);
-    ctx.lineTo(x, GAME_FLOOR - 12);
-    ctx.stroke();
-    ctx.restore();
-    drawMelanin(x, DROP_Y + radius, currentLevel, radius, 1, .84, false);
-  }
-
-  function drawMelanin(x, y, level, radius, scale = 1, alpha = 1, isSpecial = false, specialAge = 0, renderContext = ctx) {
-    const ctx = renderContext;
-    const config = MELANIN_LEVELS[level];
-    const r = radius * scale;
-    ctx.save();
-    ctx.globalAlpha = alpha;
-
-    const gradient = ctx.createRadialGradient(x - r * .34, y - r * .42, r * .08, x + r * .05, y + r * .08, r * 1.2);
-    gradient.addColorStop(0, config.highlight);
-    gradient.addColorStop(.42, config.color);
-    gradient.addColorStop(1, config.shadow);
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = gradient;
-    ctx.fill();
-    ctx.lineWidth = Math.max(1.5, r * .055);
-    ctx.strokeStyle = isSpecial ? 'rgba(233,255,244,.8)' : (config.outlineColor || 'rgba(255,247,255,.38)');
-    ctx.stroke();
-
-    // Tiny glossy highlight.
-    ctx.beginPath();
-    ctx.ellipse(x - r * .35, y - r * .47, r * .22, r * .105, -.55, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,248,255,.28)';
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(x - r * .52, y - r * .27, Math.max(1, r * .045), 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,252,255,.5)';
-    ctx.fill();
-
-    drawFace(x, y, r, level, config, ctx);
-    drawLevelBadge(x, y, r, level, config, ctx);
-    if (isSpecial) drawMaxAura(x, y, r, specialAge, ctx);
-    ctx.restore();
-  }
-
-  function drawFace(x, y, orbRadius, level, config, renderContext = ctx) {
-    const ctx = renderContext;
-    const r = orbRadius * config.faceScale;
-    const eyeY = y - r * .15;
-    const eyeX = r * config.eyeOffset;
-    const eyeW = Math.max(3, r * config.eyeScale);
-    const eyeH = Math.max(4, r * config.eyeHeightScale);
-    const isWinking = config.face === 'wink';
-
-    drawOpenEye(x - eyeX, eyeY, eyeW, eyeH, 0, config, ctx);
-    if (isWinking) drawClosedEye(x + eyeX, eyeY, eyeW, eyeH, config.faceColor, ctx);
-    else drawOpenEye(x + eyeX, eyeY, eyeW, eyeH, 0, config, ctx);
-
-    if (config.face === 'mischief') {
-      drawBrow(x + eyeX, eyeY - eyeH * 1.2, eyeW * .68, -eyeH * .2, eyeH * .08, config.faceColor, ctx);
-    } else if (['proud', 'confident', 'boss'].includes(config.face)) {
-      drawBrow(x - eyeX, eyeY - eyeH * 1.2, eyeW * .68, eyeH * .04, -eyeH * .04, config.faceColor, ctx);
-      drawBrow(x + eyeX, eyeY - eyeH * 1.2, eyeW * .68, eyeH * .04, eyeH * .04, config.faceColor, ctx);
-    }
-
-    ctx.save();
-    ctx.fillStyle = config.cheekColor;
-    ctx.beginPath();
-    ctx.ellipse(x - r * .5, y + r * .12, r * .12, r * .065, 0, 0, Math.PI * 2);
-    ctx.ellipse(x + r * .5, y + r * .12, r * .12, r * .065, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    drawFaceMouth(x, y + r * .23, r, config, ctx);
-    if (config.face === 'boss') drawMiniCrown(x, y - r * .55, r, ctx);
-  }
-
-  function drawOpenEye(x, y, width, height, pupilDirection, config, renderContext = ctx) {
-    const ctx = renderContext;
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(x, y, width, height, 0, 0, Math.PI * 2);
-    ctx.fillStyle = config.eyeColor;
-    ctx.fill();
-    ctx.strokeStyle = config.eyeOutlineColor;
-    ctx.lineWidth = Math.max(1, width * .14);
-    ctx.stroke();
-
-    const pupilRadius = Math.max(1.05, width * .39);
-    const pupilX = x + pupilDirection * width * .1;
-    const pupilY = y + height * .04;
-    ctx.beginPath();
-    ctx.ellipse(pupilX, pupilY, pupilRadius, pupilRadius * 1.12, 0, 0, Math.PI * 2);
-    ctx.fillStyle = config.pupilColor;
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(pupilX - pupilRadius * .27, pupilY - pupilRadius * .3, Math.max(.55, pupilRadius * .28), 0, Math.PI * 2);
-    ctx.fillStyle = '#FFFCFA';
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function drawClosedEye(x, y, width, height, strokeColor, renderContext = ctx) {
-    const ctx = renderContext;
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(x - width, y + height * .1);
-    ctx.quadraticCurveTo(x, y + height * .62, x + width, y + height * .1);
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = Math.max(1.5, width * .34);
-    ctx.lineCap = 'round';
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function drawBrow(x, y, width, startOffset, endOffset, color, renderContext = ctx) {
-    const ctx = renderContext;
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(x - width, y + startOffset);
-    ctx.quadraticCurveTo(x, y - width * .32, x + width, y + endOffset);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = Math.max(1.2, width * .16);
-    ctx.lineCap = 'round';
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function drawFaceMouth(x, y, r, config, renderContext = ctx) {
-    const ctx = renderContext;
-    const width = r * config.mouthScale;
-    let curve = r * .1;
-    if (config.face === 'happy' || config.face === 'proud') curve = r * .16;
-    if (config.face === 'calm' || config.face === 'gentle' || config.face === 'boss') curve = r * .08;
-
-    ctx.save();
-    ctx.beginPath();
-    if (config.face === 'mischief') {
-      ctx.moveTo(x - width, y + r * .015);
-      ctx.quadraticCurveTo(x + r * .08, y + curve, x + width, y - r * .025);
-    } else {
-      ctx.moveTo(x - width, y);
-      ctx.quadraticCurveTo(x, y + curve, x + width, y);
-    }
-    ctx.strokeStyle = config.faceColor;
-    ctx.lineWidth = Math.max(1.5, r * .055);
-    ctx.lineCap = 'round';
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function drawMiniCrown(x, baseY, r, renderContext = ctx) {
-    const ctx = renderContext;
-    const width = r * .38;
-    const height = r * .15;
-    const left = x - width / 2;
-    const right = x + width / 2;
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(left, baseY);
-    ctx.lineTo(left + width * .08, baseY - height * .58);
-    ctx.lineTo(left + width * .32, baseY - height * .16);
-    ctx.lineTo(x, baseY - height);
-    ctx.lineTo(left + width * .68, baseY - height * .16);
-    ctx.lineTo(right - width * .08, baseY - height * .58);
-    ctx.lineTo(right, baseY);
-    ctx.closePath();
-    ctx.fillStyle = '#FFD77E';
-    ctx.strokeStyle = '#D79165';
-    ctx.lineWidth = Math.max(1.2, r * .025);
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function drawLevelBadge(x, y, r, level, config, renderContext = ctx) {
-    const ctx = renderContext;
-    if (config.labelFont <= 0) return;
-    const text = `LV${level}`;
-    const labelScale = Math.min(1, r / (config.diameter / 2));
-    const fontSize = Math.max(9, config.labelFont * labelScale);
-    ctx.save();
-    ctx.font = `800 ${fontSize}px "DM Sans", "Noto Sans TC", sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const height = Math.min(r * .72, Math.max(9, fontSize * 1.2));
-    const width = ctx.measureText(text).width + Math.max(6, fontSize * .72);
-    const badgeTop = y + r * .35;
-    roundedRect(ctx, x - width / 2, badgeTop, width, height, height / 2);
-    ctx.fillStyle = config.badgeFill;
-    ctx.fill();
-    ctx.fillStyle = config.labelColor;
-    ctx.fillText(text, x, badgeTop + height / 2 + .3);
-    ctx.restore();
-  }
-
-  function drawMaxAura(x, y, r, age, renderContext = ctx) {
-    const ctx = renderContext;
-    ctx.save();
-    const pulse = 1 + Math.sin(age / 90) * .035;
-    ctx.beginPath(); ctx.arc(x, y, r * 1.34 * pulse, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(112, 207, 177, ${.42 + Math.sin(age / 120) * .12})`;
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    for (let i = 0; i < 4; i += 1) {
-      const angle = age / 300 + i * Math.PI / 2;
-      const sx = x + Math.cos(angle) * r * 1.58;
-      const sy = y + Math.sin(angle) * r * 1.58;
-      drawSparkle(sx, sy, 4 + (i % 2) * 2, '#fff0b6', ctx);
-    }
-    ctx.restore();
-  }
-
-  function drawParticles() {
-    ctx.save();
-    for (const particle of particles) {
-      const progress = clamp((gameTime - particle.bornAt) / particle.life, 0, 1);
-      ctx.globalAlpha = 1 - progress;
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, particle.size * (1 - progress * .35), 0, Math.PI * 2);
-      ctx.fillStyle = particle.color;
-      ctx.fill();
-      if (particle.size > 4 && progress < .55) drawSparkle(particle.x, particle.y, particle.size * .72, particle.color);
-    }
-    ctx.restore();
-  }
-
-  function drawSparkle(x, y, size, color, renderContext = ctx) {
-    const ctx = renderContext;
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(x, y - size); ctx.quadraticCurveTo(x + size * .22, y - size * .22, x + size, y);
-    ctx.quadraticCurveTo(x + size * .22, y + size * .22, x, y + size);
-    ctx.quadraticCurveTo(x - size * .22, y + size * .22, x - size, y);
-    ctx.quadraticCurveTo(x - size * .22, y - size * .22, x, y - size);
-    ctx.fillStyle = color; ctx.fill();
-    ctx.restore();
-  }
-
-  function roundedRect(context, x, y, width, height, radius) {
-    const r = Math.min(radius, width / 2, height / 2);
-    context.beginPath();
-    context.moveTo(x + r, y);
-    context.arcTo(x + width, y, x + width, y + height, r);
-    context.arcTo(x + width, y + height, x, y + height, r);
-    context.arcTo(x, y + height, x, y, r);
-    context.arcTo(x, y, x + width, y, r);
-    context.closePath();
-  }
-
   function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
-  function easeOutCubic(value) { return 1 - (1 - value) ** 3; }
-  function easeOutBack(value) { const c1 = 1.70158; const c3 = c1 + 1; return 1 + c3 * (value - 1) ** 3 + c1 * (value - 1) ** 2; }
 })();
