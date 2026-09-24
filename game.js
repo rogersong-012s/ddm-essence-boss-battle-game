@@ -25,21 +25,48 @@
   const COMBO_WINDOW = 1200;
   const MAX_MELANIN_BONUS = 1800;
   const SCORE_TABLE = { 1: 5, 2: 10, 3: 20, 4: 40, 5: 80, 6: 160, 7: 320, 8: 640 };
-  const MELANIN_LEVELS = [
+  const WARM_LEVELS = [
     null,
-    { diameter: 36, color: '#E8C5A7', highlight: '#FFF0DC', shadow: '#C89470', labelColor: '#694A36', badgeFill: 'rgba(255,250,239,.88)', faceColor: '#76543F', face: 'shy', faceScale: 0.98, eyeScale: 0.21, eyeHeightScale: 0.25, eyeOffset: 0.31, mouthScale: 0.22, labelFont: 9 },
-    { diameter: 52, color: '#D59B76', highlight: '#F3CBA7', shadow: '#A96849', labelColor: '#68432F', badgeFill: 'rgba(255,247,229,.76)', faceColor: '#68432F', face: 'shy', faceScale: 1.1, eyeScale: 0.22, eyeHeightScale: 0.28, eyeOffset: 0.31, mouthScale: 0.25, labelFont: 12 },
-    { diameter: 72, color: '#C4865E', highlight: '#EAB68F', shadow: '#8F5438', labelColor: '#FFF3E3', badgeFill: 'rgba(83,48,33,.26)', faceColor: '#FFF0D9', face: 'smile', faceScale: 1.09, eyeScale: 0.22, eyeHeightScale: 0.28, eyeOffset: 0.31, mouthScale: 0.25, labelFont: 13 },
-    { diameter: 96, color: '#AA6D4B', highlight: '#D99D73', shadow: '#75422B', labelColor: '#FFF3E3', badgeFill: 'rgba(75,43,30,.28)', faceColor: '#FFE6C8', face: 'playful', faceScale: 1.08, eyeScale: 0.21, eyeHeightScale: 0.27, eyeOffset: 0.31, mouthScale: 0.25, labelFont: 14 },
-    { diameter: 124, color: '#895638', highlight: '#BF8359', shadow: '#5B3522', labelColor: '#FFF2DF', badgeFill: 'rgba(56,34,23,.3)', faceColor: '#F7DAB8', face: 'proud', faceScale: 1.07, eyeScale: 0.2, eyeHeightScale: 0.26, eyeOffset: 0.31, mouthScale: 0.25, labelFont: 16 },
-    { diameter: 158, color: '#68412D', highlight: '#A16D4B', shadow: '#402317', labelColor: '#FFF0D8', badgeFill: 'rgba(38,23,16,.34)', faceColor: '#F5D3AE', face: 'mischief', faceScale: 1.06, eyeScale: 0.2, eyeHeightScale: 0.26, eyeOffset: 0.31, mouthScale: 0.24, labelFont: 18 },
-    { diameter: 198, color: '#4B3023', highlight: '#7D5339', shadow: '#29160F', labelColor: '#FFF0D8', badgeFill: 'rgba(25,15,10,.38)', faceColor: '#F2D1AC', face: 'bold', faceScale: 1.05, eyeScale: 0.2, eyeHeightScale: 0.26, eyeOffset: 0.31, mouthScale: 0.24, labelFont: 20 },
-    { diameter: 244, color: '#321C14', highlight: '#69422D', shadow: '#170905', labelColor: '#FFF0D8', badgeFill: 'rgba(18,10,7,.42)', faceColor: '#F1D0AA', face: 'boss', faceScale: 1.08, eyeScale: 0.21, eyeHeightScale: 0.26, eyeOffset: 0.31, mouthScale: 0.24, labelFont: 22 },
-    { diameter: 298, color: '#21100D', highlight: '#76513A', shadow: '#0D0504', labelColor: '#FFF1DC', badgeFill: 'rgba(12,7,6,.48)', faceColor: '#FFE0BD', face: 'crowned', faceScale: 1.12, eyeScale: 0.21, eyeHeightScale: 0.26, eyeOffset: 0.31, mouthScale: 0.24, labelFont: 24 }
+    { diameter: 36, color: '#FCEEE8', highlight: '#FFF9F5', shadow: '#EBDAD7', eyeColor: '#FFFCF9', eyeOutlineColor: '#DFA6A2', pupilColor: '#764B53', cheekColor: 'rgba(220,132,141,.34)', labelColor: '#875B61', badgeFill: 'rgba(255,250,247,.72)', faceColor: '#875B61', face: 'calm', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .2, labelFont: 9 },
+    { diameter: 52, color: '#F9E1D7', highlight: '#FFF5EF', shadow: '#EBCBC1', eyeColor: '#FFFCF8', eyeOutlineColor: '#D99A97', pupilColor: '#74474F', cheekColor: 'rgba(220,125,138,.34)', labelColor: '#8C565B', badgeFill: 'rgba(255,249,245,.68)', faceColor: '#8C565B', face: 'smile', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .22, labelFont: 12 },
+    { diameter: 72, color: '#F6D1C2', highlight: '#FFEFE8', shadow: '#E7B6AA', eyeColor: '#FFFBF7', eyeOutlineColor: '#D48686', pupilColor: '#75434B', cheekColor: 'rgba(217,113,132,.34)', labelColor: '#945157', badgeFill: 'rgba(255,249,245,.62)', faceColor: '#945157', face: 'happy', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .24, labelFont: 13 },
+    { diameter: 96, color: '#F2C0AF', highlight: '#FFE8E0', shadow: '#E0A698', eyeColor: '#FFF9F5', eyeOutlineColor: '#CB7E82', pupilColor: '#743F49', cheekColor: 'rgba(215,105,127,.33)', labelColor: '#94484F', badgeFill: 'rgba(255,248,244,.58)', faceColor: '#94484F', face: 'wink', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .22, labelFont: 14 },
+    { diameter: 124, color: '#EEAE9B', highlight: '#FFE0D6', shadow: '#D78E84', eyeColor: '#FFF9F4', eyeOutlineColor: '#C87077', pupilColor: '#733B46', cheekColor: 'rgba(211,99,123,.32)', labelColor: '#8A454D', badgeFill: 'rgba(255,248,243,.56)', faceColor: '#8A454D', face: 'proud', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .25, labelFont: 16 },
+    { diameter: 158, color: '#E99988', highlight: '#FFD7CE', shadow: '#D27A75', eyeColor: '#FFF9F5', eyeOutlineColor: '#C96C72', pupilColor: '#703A45', cheekColor: 'rgba(219,112,132,.32)', labelColor: '#80434B', badgeFill: 'rgba(255,247,243,.5)', faceColor: '#80434B', face: 'mischief', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .23, labelFont: 18 },
+    { diameter: 198, color: '#E28379', highlight: '#FFC9C3', shadow: '#C96769', eyeColor: '#FFF8F4', eyeOutlineColor: '#F0B0AB', pupilColor: '#713940', cheekColor: 'rgba(255,175,179,.34)', labelColor: '#FFF8F4', badgeFill: 'rgba(132,48,55,.44)', faceColor: '#FFF5F0', face: 'confident', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .22, labelFont: 20 },
+    { diameter: 244, color: '#D96E69', highlight: '#F7B4AF', shadow: '#BE595F', eyeColor: '#FFF8F3', eyeOutlineColor: '#EBA7A4', pupilColor: '#6F3741', cheekColor: 'rgba(255,185,187,.32)', labelColor: '#FFF8F4', badgeFill: 'rgba(111,41,51,.4)', faceColor: '#FFF3EE', face: 'gentle', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .2, labelFont: 22 },
+    { diameter: 298, color: '#CC5C5D', highlight: '#EF9997', shadow: '#AF4C58', eyeColor: '#FFF8F4', eyeOutlineColor: '#E59A9B', pupilColor: '#68323D', cheekColor: 'rgba(255,190,190,.3)', labelColor: '#FFF8F4', badgeFill: 'rgba(95,32,45,.4)', faceColor: '#FFF3EF', face: 'boss', faceScale: 1, eyeScale: .19, eyeHeightScale: .24, eyeOffset: .32, mouthScale: .23, labelFont: 24 }
   ];
+
+  const RAINBOW_COLORS = [
+    null,
+    { color: '#EF89AB', highlight: '#FFD3E1', shadow: '#D36B8D', outlineColor: 'rgba(255,248,251,.68)', eyeColor: '#FFFCF9', eyeOutlineColor: '#C76387', pupilColor: '#653B4D', cheekColor: 'rgba(207,74,109,.26)', labelColor: '#704252', badgeFill: 'rgba(255,251,252,.76)', faceColor: '#704252' },
+    { color: '#F18477', highlight: '#FFD1C0', shadow: '#D5635D', outlineColor: 'rgba(255,249,247,.68)', eyeColor: '#FFFCF8', eyeOutlineColor: '#CE6B65', pupilColor: '#663E49', cheekColor: 'rgba(213,87,93,.26)', labelColor: '#78454B', badgeFill: 'rgba(255,250,246,.74)', faceColor: '#78454B' },
+    { color: '#F3A15F', highlight: '#FFE0B1', shadow: '#D77F44', outlineColor: 'rgba(255,249,244,.68)', eyeColor: '#FFFCF7', eyeOutlineColor: '#CF793F', pupilColor: '#69414A', cheekColor: 'rgba(209,104,94,.25)', labelColor: '#70464D', badgeFill: 'rgba(255,250,245,.76)', faceColor: '#70464D' },
+    { color: '#E7C45D', highlight: '#FFF0AE', shadow: '#C8A543', outlineColor: 'rgba(255,252,241,.72)', eyeColor: '#FFFCF5', eyeOutlineColor: '#C7A441', pupilColor: '#49444D', cheekColor: 'rgba(224,102,119,.26)', labelColor: '#514750', badgeFill: 'rgba(255,252,242,.78)', faceColor: '#514750' },
+    { color: '#94C56E', highlight: '#DDF0B4', shadow: '#6E9D56', outlineColor: 'rgba(250,255,241,.7)', eyeColor: '#FFFCF5', eyeOutlineColor: '#78A752', pupilColor: '#36523D', cheekColor: 'rgba(226,113,129,.28)', labelColor: '#405842', badgeFill: 'rgba(250,255,244,.76)', faceColor: '#405842' },
+    { color: '#67BBC5', highlight: '#C7EBEE', shadow: '#438E9C', outlineColor: 'rgba(244,255,255,.72)', eyeColor: '#FFFCF8', eyeOutlineColor: '#4B9DA9', pupilColor: '#31535D', cheekColor: 'rgba(236,130,148,.27)', labelColor: '#345766', badgeFill: 'rgba(246,255,255,.76)', faceColor: '#345766' },
+    { color: '#7298D9', highlight: '#CBDBF6', shadow: '#506DA9', outlineColor: 'rgba(246,250,255,.72)', eyeColor: '#FFF9F3', eyeOutlineColor: '#AFC4EA', pupilColor: '#4B5682', cheekColor: 'rgba(255,178,190,.34)', labelColor: '#FFF9F3', badgeFill: 'rgba(46,67,120,.4)', faceColor: '#FFF7F1' },
+    { color: '#8D82D1', highlight: '#D5CEF4', shadow: '#625BA8', outlineColor: 'rgba(250,248,255,.72)', eyeColor: '#FFF9F4', eyeOutlineColor: '#BDB4EA', pupilColor: '#4D477E', cheekColor: 'rgba(255,183,198,.32)', labelColor: '#FFF9F4', badgeFill: 'rgba(53,49,108,.4)', faceColor: '#FFF7F2' },
+    { color: '#B174C2', highlight: '#E6C3F0', shadow: '#805397', outlineColor: 'rgba(255,249,255,.72)', eyeColor: '#FFFAF7', eyeOutlineColor: '#D0ADE0', pupilColor: '#543664', cheekColor: 'rgba(255,192,206,.3)', labelColor: '#FFF9F5', badgeFill: 'rgba(72,44,94,.42)', faceColor: '#FFF7F3' }
+  ];
+
+  const RAINBOW_LEVELS = [
+    null,
+    ...WARM_LEVELS.slice(1).map((level, index) => ({ ...level, ...RAINBOW_COLORS[index + 1] }))
+  ];
+
+  const BALL_THEMES = {
+    warm: { name: '暖色系', swatch: 'linear-gradient(135deg, #FCEEE8 0%, #EEAE9B 55%, #CC5C5D 100%)', levels: WARM_LEVELS },
+    rainbow: { name: '繽紛彩色', swatch: 'conic-gradient(#EF89AB 0deg, #F18477 50deg, #F3A15F 95deg, #E7C45D 140deg, #94C56E 185deg, #67BBC5 230deg, #7298D9 275deg, #8D82D1 320deg, #B174C2 360deg)', levels: RAINBOW_LEVELS }
+  };
+
+  let currentThemeKey = 'warm';
+  let MELANIN_LEVELS = BALL_THEMES[currentThemeKey].levels;
 
   const GAME_LEFT = (LOGICAL_WIDTH - PLAYFIELD_WIDTH) / 2;
   const GAME_RIGHT = GAME_LEFT + PLAYFIELD_WIDTH;
+  const PLAYFIELD_CENTER_X = (GAME_LEFT + GAME_RIGHT) / 2;
   const GAME_TOP = 156;
   const GAME_FLOOR = GAME_TOP + PLAYFIELD_HEIGHT;
   const DANGER_LINE_Y = GAME_TOP + DANGER_LINE_OFFSET;
@@ -75,6 +102,10 @@
   const finalScoreEl = document.querySelector('#final-score');
   const finalHighestEl = document.querySelector('#final-highest');
   const debugChip = document.querySelector('#debug-chip');
+  const themeOptionsEl = document.querySelector('#theme-options');
+  const themeSwitcherEl = document.querySelector('#theme-switcher');
+  const themeSelectors = new Map();
+  const recipeBubbles = [...document.querySelectorAll('.recipe-bubble')];
 
   let engine;
   let entities = new Map();
@@ -82,7 +113,9 @@
   let particles = [];
   let score = 0;
   let best = readBest();
-  let currentRunHighestLevel = 1;
+  let currentRunHighestLevel = 0;
+  let currentRunMaxMergeCount = 0;
+  const unlockedLevels = new Set();
   let ddmCount = INITIAL_DDM;
   let currentLevel = null;
   let nextLevel = randomDropLevel();
@@ -93,9 +126,11 @@
   let lastFrame = 0;
   let gameTime = 0;
   let physicsAccumulator = 0;
-  let pointerX = LOGICAL_WIDTH / 2;
-  let pointerInside = false;
+  let isPointerInsidePlayfield = false;
+  let lastValidDropX = PLAYFIELD_CENTER_X;
+  let currentDropX = PLAYFIELD_CENTER_X;
   let dangerSince = null;
+  let dangerLineWarning = false;
   let lastMergeTime = -Infinity;
   let comboCount = 0;
   let debugSide = 1;
@@ -124,16 +159,19 @@
 
   bestEl.textContent = formatScore(best);
   debugChip.hidden = !DEBUG;
+  initializeThemeSelector();
   updateScoreUI();
   updateDDMUI();
+  updateJourneyUI();
   updateNextUI();
   resizeGame();
   resizeObserver = new ResizeObserver(resizeGame);
   resizeObserver.observe(wrapper);
   window.addEventListener('resize', resizeGame, { passive: true });
+  canvas.addEventListener('pointerenter', handlePointerMove);
   canvas.addEventListener('pointermove', handlePointerMove);
+  canvas.addEventListener('pointerleave', handlePointerLeave);
   canvas.addEventListener('pointerdown', handlePointerDown);
-  canvas.addEventListener('pointerleave', () => { pointerInside = false; });
   ddmButton.addEventListener('click', toggleDDMMode);
   document.querySelector('#cancel-ddm').addEventListener('click', exitDDMMode);
   document.querySelector('#restart-button').addEventListener('click', restartGame);
@@ -148,9 +186,9 @@
     return 1 + Math.floor(Math.random() * poolMaxLevel);
   }
 
-  function getSpawnPoolMaxLevel(highestMergedLevel) {
-    if (highestMergedLevel >= 7) return 4;
-    if (highestMergedLevel >= 5) return 3;
+  function getSpawnPoolMaxLevel(highestReachedLevel) {
+    if (highestReachedLevel >= 7) return 4;
+    if (highestReachedLevel >= 5) return 3;
     return 2;
   }
 
@@ -201,14 +239,85 @@
     body.plugin.melanin = entity;
     entities.set(body.id, entity);
     Composite.add(engine.world, body);
+    registerReachedLevel(level);
     return entity;
+  }
+
+  function unlockLevel(level) {
+    if (!Number.isInteger(level) || level < 1 || level > MAX_LEVEL || unlockedLevels.has(level)) return;
+    unlockedLevels.add(level);
+    updateJourneyUI();
+  }
+
+  function registerReachedLevel(level) {
+    unlockLevel(level);
+    if (level > currentRunHighestLevel) {
+      currentRunHighestLevel = level;
+      updateScoreUI();
+    }
+  }
+
+  function initializeThemeSelector() {
+    if (!themeOptionsEl) return;
+    themeOptionsEl.replaceChildren();
+    themeSelectors.clear();
+    for (const [themeKey, theme] of Object.entries(BALL_THEMES)) {
+      const selector = document.createElement('button');
+      selector.type = 'button';
+      selector.className = 'theme-dot';
+      selector.dataset.themeKey = themeKey;
+      selector.setAttribute('aria-label', '切換至' + theme.name);
+      selector.title = theme.name;
+      const swatch = document.createElement('span');
+      swatch.className = 'theme-dot-swatch';
+      swatch.style.setProperty('--theme-swatch', theme.swatch);
+      swatch.setAttribute('aria-hidden', 'true');
+      selector.append(swatch);
+      selector.addEventListener('click', () => setTheme(themeKey));
+      themeOptionsEl.append(selector);
+      themeSelectors.set(themeKey, selector);
+    }
+    updateThemeSelector();
+  }
+
+  function updateThemeSelector() {
+    const activeTheme = BALL_THEMES[currentThemeKey];
+    themeSwitcherEl?.setAttribute('aria-label', '球色系切換，目前為' + activeTheme.name);
+    for (const [themeKey, selector] of themeSelectors) {
+      const isActive = themeKey === currentThemeKey;
+      selector.setAttribute('aria-pressed', String(isActive));
+      selector.classList.toggle('is-active', isActive);
+    }
+  }
+
+  function setTheme(themeKey) {
+    if (!BALL_THEMES[themeKey] || themeKey === currentThemeKey) return;
+    currentThemeKey = themeKey;
+    MELANIN_LEVELS = BALL_THEMES[currentThemeKey].levels;
+    updateThemeSelector();
+    updateJourneyUI();
+    draw();
+  }
+  function updateJourneyUI() {
+    recipeBubbles.forEach((bubble, index) => {
+      const level = MELANIN_LEVELS[index + 1];
+      const isUnlocked = unlockedLevels.has(index + 1);
+      bubble.style.backgroundColor = level.color;
+      bubble.style.color = level.labelColor;
+      bubble.classList.toggle('unlocked', isUnlocked);
+      bubble.classList.toggle('locked', !isUnlocked);
+    });
   }
 
   function spawnNextMelanin() {
     if (gameOver) return;
     currentLevel = nextLevel;
+    const radius = MELANIN_LEVELS[currentLevel].diameter / 2;
+    const spawnX = isPointerInsidePlayfield ? lastValidDropX : PLAYFIELD_CENTER_X;
+    currentDropX = clamp(spawnX, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4);
+    if (isPointerInsidePlayfield) lastValidDropX = currentDropX;
+    registerReachedLevel(currentLevel);
     nextLevel = randomDropLevel();
-    readyToDrop = true;
     updateNextUI();
   }
 
@@ -220,24 +329,35 @@
   }
 
   function handlePointerMove(event) {
-    const point = toLogicalPoint(event);
-    pointerX = clamp(point.x, GAME_LEFT + 22, GAME_RIGHT - 22);
-    pointerInside = point.x >= 0 && point.x <= LOGICAL_WIDTH && point.y >= 0 && point.y <= LOGICAL_HEIGHT;
+    updateDropPreviewPosition(toLogicalPoint(event));
+  }
+
+  function handlePointerLeave() {
+    isPointerInsidePlayfield = false;
   }
 
   function handlePointerDown(event) {
     if (gameOver) return;
     event.preventDefault();
     const point = toLogicalPoint(event);
-    pointerX = clamp(point.x, GAME_LEFT + 22, GAME_RIGHT - 22);
-    pointerInside = true;
+    updateDropPreviewPosition(point);
     if (ddmMode) {
       const target = findMelaninAt(point.x, point.y);
       if (!target) return;
       useDDM(target);
       return;
     }
-    dropMelanin(pointerX);
+    dropMelanin(currentDropX, event.pointerType);
+  }
+
+  function updateDropPreviewPosition(point) {
+    const insidePlayfield = point.x >= GAME_LEFT && point.x <= GAME_RIGHT
+      && point.y >= GAME_TOP - BOWL_TOP_PADDING && point.y <= GAME_FLOOR + BOWL_BOTTOM_PADDING;
+    isPointerInsidePlayfield = insidePlayfield;
+    if (!insidePlayfield || currentLevel == null) return;
+    const radius = MELANIN_LEVELS[currentLevel].diameter / 2;
+    lastValidDropX = clamp(point.x, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4);
+    currentDropX = lastValidDropX;
   }
 
   function toLogicalPoint(event) {
@@ -248,14 +368,19 @@
     };
   }
 
-  function dropMelanin(x) {
+  function dropMelanin(x, pointerType = 'mouse') {
     if (gameOver || ddmMode || !readyToDrop || currentLevel == null) return;
     const level = currentLevel;
     const radius = MELANIN_LEVELS[level].diameter / 2;
     createMelanin(level, clamp(x, GAME_LEFT + radius + 3, GAME_RIGHT - radius - 3), DROP_Y + radius, {});
     readyToDrop = false;
     currentLevel = null;
-    schedule(spawnNextMelanin, DROP_COOLDOWN);
+    // Touch has no hover position to carry forward; each newly prepared piece starts centered.
+    if (pointerType === 'touch') isPointerInsidePlayfield = false;
+    spawnNextMelanin();
+    schedule(() => {
+      if (!gameOver) readyToDrop = true;
+    }, DROP_COOLDOWN);
   }
 
   function handleCollision(event) {
@@ -295,24 +420,23 @@
     }
     const result = createMelanin(nextLevelValue, safeX, safeY);
     result.popFrom = gameTime;
-    currentRunHighestLevel = Math.max(currentRunHighestLevel, nextLevelValue);
-    updateScoreUI();
     emitParticles(safeX, safeY, '#efc782', 9);
   }
 
   function handleMaxMelanin(x, y) {
     addScore(MAX_MELANIN_BONUS);
-    currentRunHighestLevel = MAX_LEVEL;
     const maxBlob = createMelanin(MAX_LEVEL, x, y, { special: true });
+    maxBlob.completionCounted = false;
     maxBlob.stateAt = gameTime;
-    updateScoreUI();
     emitParticles(x, y, '#f6d68e', 25);
     showToast('成功淡化！　Lv 9 完成目標', 1500, true);
     schedule(() => {
-      if (!entities.has(maxBlob.body.id)) return;
-      removeEntity(maxBlob);
+      if (!entities.has(maxBlob.body.id) || maxBlob.completionCounted) return;
+      if (!removeEntity(maxBlob)) return;
+      maxBlob.completionCounted = true;
       const wasFull = ddmCount >= MAX_DDM;
       addDDM();
+      currentRunMaxMergeCount += 1;
       if (wasFull) showToast('DDM 已補滿！', 1800, true);
       else showToast('DDM +1　淡化救援已補充', 1900, true);
       emitParticles(x, y, '#82d8bd', 19);
@@ -488,16 +612,27 @@
     });
     if (!isInDanger) {
       dangerSince = null;
+      dangerLineWarning = false;
       return;
     }
-    if (dangerSince == null) dangerSince = gameTime;
+    if (dangerSince == null) {
+      dangerSince = gameTime;
+      dangerLineWarning = true;
+    }
     if (gameTime - dangerSince >= GAME_OVER_DELAY) triggerGameOver();
+  }
+
+  function getGameOverMessage() {
+    if (currentRunMaxMergeCount >= 2) return '多次完成最高等級！下次再刷新你的紀錄吧！';
+    if (currentRunMaxMergeCount === 1) return '最高等級已完成！下次挑戰更多次吧！';
+    return '休息一下，再來挑戰最高等級吧。';
   }
 
   function triggerGameOver() {
     if (gameOver) return;
     gameOver = true;
     dangerSince = null;
+    dangerLineWarning = false;
     // Timed clean-up still runs (for example, an already-earned Lv 9 reward).
     // Any pending drop checks gameOver before preparing a new piece; restartGame clears all timers.
     ddmMode = false;
@@ -506,6 +641,7 @@
     canvas.classList.remove('ddm-selecting');
     finalScoreEl.textContent = formatScore(score);
     finalHighestEl.textContent = `LV ${currentRunHighestLevel}`;
+    document.querySelector('.over-copy').textContent = getGameOverMessage();
     gameOverEl.hidden = false;
     updateDDMUI();
   }
@@ -520,15 +656,21 @@
     entities.clear();
     particles = [];
     score = 0;
-    currentRunHighestLevel = 1;
+    currentRunHighestLevel = 0;
+    unlockedLevels.clear();
+    currentRunMaxMergeCount = 0;
     ddmCount = INITIAL_DDM;
     currentLevel = null;
     nextLevel = randomDropLevel();
+    isPointerInsidePlayfield = false;
+    lastValidDropX = PLAYFIELD_CENTER_X;
+    currentDropX = PLAYFIELD_CENTER_X;
     readyToDrop = true;
     ddmMode = false;
     ddmBusy = false;
     gameOver = false;
     dangerSince = null;
+    dangerLineWarning = false;
     lastMergeTime = -Infinity;
     comboCount = 0;
     gameTime = 0;
@@ -541,6 +683,7 @@
     createWalls();
     updateDDMUI();
     updateScoreUI();
+    updateJourneyUI();
     updateNextUI();
   }
 
@@ -727,23 +870,32 @@
 
   function drawDangerLine() {
     ctx.save();
+    const warningFlash = dangerLineWarning && dangerSince != null
+      && Math.floor((gameTime - dangerSince) / 300) % 2 === 1;
+    ctx.globalAlpha = 1;
     ctx.setLineDash([9, 10]);
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgba(225, 124, 99, .82)';
+    ctx.lineWidth = warningFlash ? 4 : 2;
+    ctx.strokeStyle = warningFlash ? '#ff3b30' : 'rgba(225, 124, 99, .82)';
+    if (warningFlash) {
+      ctx.shadowColor = 'rgba(255, 59, 48, .8)';
+      ctx.shadowBlur = 9;
+    }
     ctx.beginPath();
     ctx.moveTo(GAME_LEFT + 18, DANGER_LINE_Y);
     ctx.lineTo(GAME_RIGHT - 18, DANGER_LINE_Y);
     ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
     ctx.setLineDash([]);
-    ctx.font = `700 ${DANGER_LABEL_FONT_SIZE}px "DM Sans", "Noto Sans TC", sans-serif`;
+    ctx.font = '700 ' + DANGER_LABEL_FONT_SIZE + 'px "DM Sans", "Noto Sans TC", sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    const label = '危險線  ·  穩住 2 秒';
+    const label = '危險線';
     const textWidth = ctx.measureText(label).width;
     roundedRect(ctx, GAME_LEFT + 23, DANGER_LINE_Y - 16, textWidth + 20, 31, 15);
-    ctx.fillStyle = 'rgba(255,255,255,.94)';
+    ctx.fillStyle = warningFlash ? 'rgba(255,235,232,.98)' : 'rgba(255,255,255,.94)';
     ctx.fill();
-    ctx.fillStyle = '#aa5b4d';
+    ctx.fillStyle = warningFlash ? '#ff3b30' : '#aa5b4d';
     ctx.fillText(label, GAME_LEFT + 33, DANGER_LINE_Y);
     ctx.restore();
   }
@@ -789,9 +941,9 @@
   }
 
   function drawDropPreview() {
-    if (gameOver || ddmMode || !readyToDrop || currentLevel == null || !pointerInside) return;
+    if (gameOver || currentLevel == null) return;
     const radius = MELANIN_LEVELS[currentLevel].diameter / 2;
-    const x = clamp(pointerX, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4);
+    const x = clamp(currentDropX, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4);
     ctx.save();
     ctx.setLineDash([4, 8]);
     ctx.strokeStyle = 'rgba(145, 111, 96, .32)';
@@ -820,17 +972,17 @@
     ctx.fillStyle = gradient;
     ctx.fill();
     ctx.lineWidth = Math.max(1.5, r * .055);
-    ctx.strokeStyle = isSpecial ? 'rgba(233,255,244,.8)' : 'rgba(255,239,219,.3)';
+    ctx.strokeStyle = isSpecial ? 'rgba(233,255,244,.8)' : (config.outlineColor || 'rgba(255,247,255,.38)');
     ctx.stroke();
 
     // Tiny glossy highlight.
     ctx.beginPath();
     ctx.ellipse(x - r * .35, y - r * .47, r * .22, r * .105, -.55, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,245,220,.25)';
+    ctx.fillStyle = 'rgba(255,248,255,.28)';
     ctx.fill();
     ctx.beginPath();
     ctx.arc(x - r * .52, y - r * .27, Math.max(1, r * .045), 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,249,229,.46)';
+    ctx.fillStyle = 'rgba(255,252,255,.5)';
     ctx.fill();
 
     drawFace(x, y, r, level, config, ctx);
@@ -842,78 +994,131 @@
   function drawFace(x, y, orbRadius, level, config, renderContext = ctx) {
     const ctx = renderContext;
     const r = orbRadius * config.faceScale;
-    const eyeY = y - r * .12;
+    const eyeY = y - r * .15;
     const eyeX = r * config.eyeOffset;
     const eyeW = Math.max(3, r * config.eyeScale);
     const eyeH = Math.max(4, r * config.eyeHeightScale);
-    const eyeModes = { shy: 'round', smile: 'round', playful: 'wink', proud: 'happy', mischief: 'mischief', bold: 'confident', boss: 'boss', crowned: 'boss' };
-    const mode = eyeModes[config.face] || 'round';
-    const eyeFill = '#fff0d9';
-    const pupil = '#392725';
+    const isWinking = config.face === 'wink';
+
+    drawOpenEye(x - eyeX, eyeY, eyeW, eyeH, 0, config, ctx);
+    if (isWinking) drawClosedEye(x + eyeX, eyeY, eyeW, eyeH, config.faceColor, ctx);
+    else drawOpenEye(x + eyeX, eyeY, eyeW, eyeH, 0, config, ctx);
+
+    if (config.face === 'mischief') {
+      drawBrow(x + eyeX, eyeY - eyeH * 1.2, eyeW * .68, -eyeH * .2, eyeH * .08, config.faceColor, ctx);
+    } else if (['proud', 'confident', 'boss'].includes(config.face)) {
+      drawBrow(x - eyeX, eyeY - eyeH * 1.2, eyeW * .68, eyeH * .04, -eyeH * .04, config.faceColor, ctx);
+      drawBrow(x + eyeX, eyeY - eyeH * 1.2, eyeW * .68, eyeH * .04, eyeH * .04, config.faceColor, ctx);
+    }
+
     ctx.save();
-    if (mode === 'happy') {
-      drawClosedEye(x - eyeX, eyeY, eyeW, eyeH, true, ctx);
-      drawClosedEye(x + eyeX, eyeY, eyeW, eyeH, true, ctx);
-    } else if (mode === 'boss') {
-      drawClosedEye(x - eyeX, eyeY + 1, eyeW * 1.1, eyeH, false, ctx);
-      drawClosedEye(x + eyeX, eyeY + 1, eyeW * 1.1, eyeH, false, ctx);
-    } else {
-      ctx.beginPath(); ctx.ellipse(x - eyeX, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fillStyle = eyeFill; ctx.fill();
-      ctx.beginPath(); ctx.ellipse(x + eyeX, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(x - eyeX + eyeW * .12, eyeY + eyeH * .1, eyeW * .48, 0, Math.PI * 2); ctx.fillStyle = pupil; ctx.fill();
-      if (mode === 'wink') {
-        ctx.beginPath(); ctx.ellipse(x + eyeX, eyeY, eyeW * 1.12, Math.max(1.4, eyeH * .17), -.1, Math.PI, Math.PI * 2); ctx.strokeStyle = '#f7d7b9'; ctx.lineWidth = Math.max(1.7, r * .07); ctx.lineCap = 'round'; ctx.stroke();
-      } else {
-        ctx.beginPath(); ctx.arc(x + eyeX + eyeW * .12, eyeY + eyeH * .1, eyeW * .48, 0, Math.PI * 2); ctx.fill();
-      }
-      if (mode === 'mischief' || mode === 'confident') {
-        ctx.strokeStyle = '#462c2a'; ctx.lineWidth = Math.max(1.4, r * .065); ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(x + eyeX - eyeW, eyeY - eyeH * 1.18); ctx.lineTo(x + eyeX + eyeW * .85, eyeY - eyeH * .78); ctx.stroke();
-      }
-    }
+    ctx.fillStyle = config.cheekColor;
+    ctx.beginPath();
+    ctx.ellipse(x - r * .5, y + r * .12, r * .12, r * .065, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + r * .5, y + r * .12, r * .12, r * .065, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
 
-    if (['shy', 'smile', 'playful', 'proud'].includes(config.face)) {
-      ctx.fillStyle = 'rgba(239,151,137,.35)';
-      ctx.beginPath(); ctx.ellipse(x - r * .51, y + r * .19, r * .115, r * .06, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(x + r * .51, y + r * .19, r * .115, r * .06, 0, 0, Math.PI * 2); ctx.fill();
-    }
+    drawFaceMouth(x, y + r * .23, r, config, ctx);
+    if (config.face === 'boss') drawMiniCrown(x, y - r * .55, r, ctx);
+  }
 
-    const mouthY = y + r * .26;
-    ctx.strokeStyle = config.faceColor;
-    ctx.fillStyle = config.faceColor;
-    ctx.lineWidth = Math.max(1.6, r * .07);
-    ctx.lineCap = 'round';
-    if (config.face === 'shy') {
-      ctx.beginPath(); ctx.arc(x, mouthY, Math.max(2.5, r * .075), 0, Math.PI * 2); ctx.stroke();
-    } else if (config.face === 'smile' || config.face === 'proud') {
-      ctx.beginPath(); ctx.moveTo(x - r * config.mouthScale, mouthY - r * .025); ctx.quadraticCurveTo(x, mouthY + r * .16, x + r * config.mouthScale, mouthY - r * .025); ctx.stroke();
-    } else if (config.face === 'playful') {
-      ctx.beginPath(); ctx.moveTo(x - r * config.mouthScale, mouthY); ctx.quadraticCurveTo(x + r * .03, mouthY + r * .18, x + r * config.mouthScale, mouthY - r * .03); ctx.stroke();
-      ctx.beginPath(); ctx.ellipse(x + r * .07, mouthY + r * .16, r * .075, r * .08, 0, 0, Math.PI * 2); ctx.fillStyle = '#e99c8e'; ctx.fill();
-    } else if (config.face === 'mischief') {
-      ctx.beginPath(); ctx.moveTo(x - r * config.mouthScale, mouthY); ctx.quadraticCurveTo(x + r * .02, mouthY + r * .12, x + r * config.mouthScale, mouthY - r * .02); ctx.stroke();
-    } else if (config.face === 'bold') {
-      ctx.beginPath(); ctx.moveTo(x - r * config.mouthScale, mouthY); ctx.quadraticCurveTo(x, mouthY + r * .18, x + r * config.mouthScale, mouthY); ctx.stroke();
-    } else {
-      ctx.beginPath(); ctx.ellipse(x, mouthY, r * .12, r * .075, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(x - r * .2, eyeY - eyeH * 1.7); ctx.lineTo(x - r * .05, eyeY - eyeH * 2.4); ctx.lineTo(x + r * .08, eyeY - eyeH * 1.6); ctx.lineTo(x + r * .21, eyeY - eyeH * 2.1); ctx.strokeStyle = '#efd08f'; ctx.lineWidth = Math.max(1.5, r * .04); ctx.stroke();
-    }
+  function drawOpenEye(x, y, width, height, pupilDirection, config, renderContext = ctx) {
+    const ctx = renderContext;
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(x, y, width, height, 0, 0, Math.PI * 2);
+    ctx.fillStyle = config.eyeColor;
+    ctx.fill();
+    ctx.strokeStyle = config.eyeOutlineColor;
+    ctx.lineWidth = Math.max(1, width * .14);
+    ctx.stroke();
+
+    const pupilRadius = Math.max(1.05, width * .39);
+    const pupilX = x + pupilDirection * width * .1;
+    const pupilY = y + height * .04;
+    ctx.beginPath();
+    ctx.ellipse(pupilX, pupilY, pupilRadius, pupilRadius * 1.12, 0, 0, Math.PI * 2);
+    ctx.fillStyle = config.pupilColor;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(pupilX - pupilRadius * .27, pupilY - pupilRadius * .3, Math.max(.55, pupilRadius * .28), 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFCFA';
+    ctx.fill();
     ctx.restore();
   }
 
-  function drawClosedEye(x, y, width, height, happy, renderContext = ctx) {
+  function drawClosedEye(x, y, width, height, strokeColor, renderContext = ctx) {
     const ctx = renderContext;
+    ctx.save();
     ctx.beginPath();
-    if (happy) {
-      ctx.arc(x, y + height * .2, width * .8, Math.PI, Math.PI * 2);
-    } else {
-      ctx.moveTo(x - width, y);
-      ctx.quadraticCurveTo(x, y + height * .45, x + width, y);
-    }
-    ctx.strokeStyle = '#fff0d9';
-    ctx.lineWidth = Math.max(1.8, width * .45);
+    ctx.moveTo(x - width, y + height * .1);
+    ctx.quadraticCurveTo(x, y + height * .62, x + width, y + height * .1);
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = Math.max(1.5, width * .34);
     ctx.lineCap = 'round';
     ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawBrow(x, y, width, startOffset, endOffset, color, renderContext = ctx) {
+    const ctx = renderContext;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x - width, y + startOffset);
+    ctx.quadraticCurveTo(x, y - width * .32, x + width, y + endOffset);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(1.2, width * .16);
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawFaceMouth(x, y, r, config, renderContext = ctx) {
+    const ctx = renderContext;
+    const width = r * config.mouthScale;
+    let curve = r * .1;
+    if (config.face === 'happy' || config.face === 'proud') curve = r * .16;
+    if (config.face === 'calm' || config.face === 'gentle' || config.face === 'boss') curve = r * .08;
+
+    ctx.save();
+    ctx.beginPath();
+    if (config.face === 'mischief') {
+      ctx.moveTo(x - width, y + r * .015);
+      ctx.quadraticCurveTo(x + r * .08, y + curve, x + width, y - r * .025);
+    } else {
+      ctx.moveTo(x - width, y);
+      ctx.quadraticCurveTo(x, y + curve, x + width, y);
+    }
+    ctx.strokeStyle = config.faceColor;
+    ctx.lineWidth = Math.max(1.5, r * .055);
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawMiniCrown(x, baseY, r, renderContext = ctx) {
+    const ctx = renderContext;
+    const width = r * .38;
+    const height = r * .15;
+    const left = x - width / 2;
+    const right = x + width / 2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(left, baseY);
+    ctx.lineTo(left + width * .08, baseY - height * .58);
+    ctx.lineTo(left + width * .32, baseY - height * .16);
+    ctx.lineTo(x, baseY - height);
+    ctx.lineTo(left + width * .68, baseY - height * .16);
+    ctx.lineTo(right - width * .08, baseY - height * .58);
+    ctx.lineTo(right, baseY);
+    ctx.closePath();
+    ctx.fillStyle = '#FFD77E';
+    ctx.strokeStyle = '#D79165';
+    ctx.lineWidth = Math.max(1.2, r * .025);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
   }
 
   function drawLevelBadge(x, y, r, level, config, renderContext = ctx) {

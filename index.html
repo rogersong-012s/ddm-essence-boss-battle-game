@@ -43,21 +43,21 @@
         <div class="score-number" id="score-value">0</div>
         <div class="score-divider"></div>
         <div class="record-row"><span>BEST</span><strong id="best-value">0</strong></div>
-        <div class="record-row"><span>最高合成</span><strong id="highest-value">LV 1</strong></div>
+        <div class="record-row"><span>本局最高等級</span><strong id="highest-value">LV 1</strong></div>
       </aside>
 
       <aside class="recipe-panel glass-panel" aria-label="九階合成旅程">
         <div class="recipe-title"><span>你的合成旅程</span><span class="recipe-sparkle">✦</span></div>
         <div class="recipe-track" role="img" aria-label="從 Lv 1 逐階合成至 Lv 9">
-          <span class="recipe-bubble recipe-lv1">1</span>
-          <span class="recipe-bubble recipe-lv2">2</span>
-          <span class="recipe-bubble recipe-lv3">3</span>
-          <span class="recipe-bubble recipe-lv4">4</span>
-          <span class="recipe-bubble recipe-lv5">5</span>
-          <span class="recipe-bubble recipe-lv6">6</span>
-          <span class="recipe-bubble recipe-lv7">7</span>
-          <span class="recipe-bubble recipe-lv8">8</span>
-          <span class="recipe-bubble recipe-lv9">9</span>
+          <span class="recipe-bubble locked recipe-lv1">1</span>
+          <span class="recipe-bubble locked recipe-lv2">2</span>
+          <span class="recipe-bubble locked recipe-lv3">3</span>
+          <span class="recipe-bubble locked recipe-lv4">4</span>
+          <span class="recipe-bubble locked recipe-lv5">5</span>
+          <span class="recipe-bubble locked recipe-lv6">6</span>
+          <span class="recipe-bubble locked recipe-lv7">7</span>
+          <span class="recipe-bubble locked recipe-lv8">8</span>
+          <span class="recipe-bubble locked recipe-lv9">9</span>
         </div>
         <p>兩顆相同等級相碰就會合成<br>一路挑戰到 Lv 9</p>
       </aside>
@@ -100,11 +100,15 @@
           <p class="eyebrow">A LITTLE RESET?</p>
           <h2 id="game-over-title">堆得有點高了！</h2>
           <p class="over-copy">休息一下，再來挑戰最高等級吧。</p>
-          <div class="over-stats"><div><span>本次分數</span><strong id="final-score">0</strong></div><div><span>最高合成</span><strong id="final-highest">LV 1</strong></div></div>
+          <div class="over-stats"><div><span>本次分數</span><strong id="final-score">0</strong></div><div><span>本局最高等級</span><strong id="final-highest">LV 1</strong></div></div>
           <button class="play-again" id="restart-button" type="button"><span>↻</span> 重新開始</button>
         </div>
       </section>
 
+      <aside class="theme-switcher" id="theme-switcher" aria-label="球色系切換">
+        <span class="theme-switcher-label">球色系</span>
+        <div class="theme-options" id="theme-options" role="group" aria-label="選擇球的色系"></div>
+      </aside>
       <div class="debug-chip" id="debug-chip" hidden>DEV · 1–8 等級　D 補充 DDM　R 重開</div>
     </section>
   </main>
