@@ -15,6 +15,8 @@
   <script defer src="js/combat.js"></script>
   <script defer src="js/effects.js"></script>
   <script defer src="js/renderer.js"></script>
+  <script defer src="js/progression.js"></script>
+  <script defer src="js/ball-sizes.js"></script>
   <script defer src="game.js"></script>
 </head>
 <body>
@@ -149,7 +151,7 @@
           <circle id="player-attack-origin" cx="124" cy="28" r="9" fill="transparent" aria-hidden="true" />
           <path d="M76 169q-13 8-17 24l15 9 14-15" fill="#f4c69f" stroke="#bd866e" stroke-width="4" stroke-linejoin="round" />
         </svg>
-        <div class="player-caption"><span>PLAYER</span><strong>DDM 守衛</strong></div>
+        <div class="player-caption"><span>PLAYER</span><strong id="player-name">DDM守衛+0</strong></div>
       </aside>
 
       <aside class="next-panel glass-panel" aria-label="下一顆 DDM 精華">
@@ -170,7 +172,7 @@
             <svg viewBox="0 0 52 64" role="img"><path d="M19 4h14v9l8 8v32a6 6 0 0 1-6 6H17a6 6 0 0 1-6-6V21l8-8z"/><path d="M19 13h14M11 27h30"/><path class="bottle-cross" d="M26 33v13M19.5 39.5h13"/><path class="bottle-drop" d="M16 51c3-4 7-4 10 0"/></svg>
           </span>
           <span class="ddm-copy"><strong>直接使用DDM</strong><small>標準傷害 × 25%</small></span>
-          <span class="ddm-count" id="ddm-count">× 3</span>
+          <span class="ddm-count" id="ddm-count">× 1</span>
           <span class="ddm-shine" aria-hidden="true"></span>
         </button>
         <p class="ddm-hint" id="ddm-hint">選取精華，轉化為攻擊能量</p>
@@ -180,7 +182,7 @@
         <button class="ssw-button skill-button" id="ssw-button" type="button" aria-pressed="false">
           <span class="ssw-icon" aria-hidden="true">✦</span>
           <span class="ddm-copy"><strong>使用SSW+1</strong><small>精華直接升級一階</small></span>
-          <span class="ddm-count" id="ssw-count">× 3</span>
+          <span class="ddm-count" id="ssw-count">× 1</span>
           <span class="ddm-shine" aria-hidden="true"></span>
         </button>
         <p class="ddm-hint" id="ssw-hint">選取一顆精華提升一級</p>

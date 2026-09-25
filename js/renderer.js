@@ -11,13 +11,13 @@
     } = config;
     let {
       gameTime, dangerSince, dangerLineWarning, particles, entities, activeSkill, gamePaused,
-      currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y
+      currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y, playerBallScale
     } = getState();
 
     function syncState() {
       ({
         gameTime, dangerSince, dangerLineWarning, particles, entities, activeSkill, gamePaused,
-        currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y
+        currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y, playerBallScale
       } = getState());
     }
 
@@ -47,7 +47,7 @@
       const height = nextPreviewCanvas.clientHeight;
       if (!width || !height) return;
       nextPreviewCtx.clearRect(0, 0, width, height);
-      const radius = Math.min(MELANIN_LEVELS[nextLevel].diameter / 2, Math.min(width, height) * .3);
+      const radius = Math.min(MELANIN_LEVELS[nextLevel].diameter / 2 * playerBallScale, Math.min(width, height) * .3);
       drawMelanin(width / 2, height / 2, nextLevel, radius, 1, 1, false, 0, nextPreviewCtx);
     }
 
@@ -230,7 +230,7 @@
 
     function drawDropPreview() {
       if (gamePaused || currentLevel == null) return;
-      const radius = MELANIN_LEVELS[currentLevel].diameter / 2;
+      const radius = MELANIN_LEVELS[currentLevel].diameter / 2 * playerBallScale;
       const x = clamp(currentDropX, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4);
       ctx.save();
       ctx.setLineDash([4, 8]);

@@ -305,6 +305,8 @@ h1 span { color: #2f907f; }
 .player-caption { display:flex;flex-direction:column;align-items:center;gap:.1cqw;color:#28676b;text-align:center;line-height:1.1;text-shadow:0 1px rgba(255,255,255,.8); }
 .player-caption span { color:#3f898a;font-size:var(--font-debug);font-weight:800;letter-spacing:.18em; }
 .player-caption strong { font-size:var(--font-body);font-weight:800; }
+.player-caption strong.is-leveling-up { animation:player-level-bump .78s ease-out; }
+@keyframes player-level-bump { 0%,100% { transform:scale(1);color:inherit; } 35% { transform:scale(1.2);color:#188c75;text-shadow:0 0 .7cqw rgba(90,203,166,.65); } }
 .meteor-trajectory { fill:none;stroke:none;pointer-events:none; }
 .meteor-projectile { pointer-events:none; }
 .meteor-tail { fill:url(#meteor-tail-gradient);filter:drop-shadow(0 0 9px rgba(255,184,94,.85));opacity:.96; }

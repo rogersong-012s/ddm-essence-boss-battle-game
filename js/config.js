@@ -36,10 +36,13 @@
   }
 
   const SKILL_CONFIG = Object.freeze({
-    initialUses: 2,
+    initialUses: 1,
     maxUses: 3,
     directDdmDamageMultiplier: 0.25
   });
+  const PLAYER_MAX_LEVEL = 100;
+  const BALL_SIZE_REDUCTION_PER_PLAYER_LEVEL = 0.02;
+  const MIN_BALL_SCALE = 0.25;
   const BOSS_CONFIG = Object.freeze({
     maxHp: 8000,
     projectileTravelDuration: 460,
@@ -59,6 +62,9 @@
     PLAYFIELD_HEIGHT,
     ballDiameterForLevel,
     SKILL_CONFIG,
+    PLAYER_MAX_LEVEL,
+    BALL_SIZE_REDUCTION_PER_PLAYER_LEVEL,
+    MIN_BALL_SCALE,
     DROP_DAMAGE: 10,
     GAME_OVER_DELAY: 2000,
     DROP_COOLDOWN: 520,

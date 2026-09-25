@@ -55,6 +55,7 @@
   const restartButtonEl = document.querySelector('#restart-button');
   const continueButtonEl = document.querySelector('#continue-button');
   const bossTargetEl = document.querySelector('#boss-target');
+  const playerNameEl = document.querySelector('#player-name');
   const bossHealthCardEl = document.querySelector('#boss-health-card');
   const bossHpLabelEl = document.querySelector('#boss-hp-label');
   const bossCoreEl = document.querySelector('#boss-core');
@@ -69,6 +70,7 @@
   const themeOptionsEl = document.querySelector('#theme-options');
   const themeSwitcherEl = document.querySelector('#theme-switcher');
   const themeSelectors = new Map();
+  const playerProgression = window.DDMGameProgression.createPlayerProgression(GAME_CONFIG, playerNameEl);
 
   let engine;
   let entities = new Map();
@@ -126,7 +128,8 @@
     canvas, ctx, nextPreviewCanvas, nextPreviewCtx, config: GAME_CONFIG, clamp,
     getState: () => ({
       gameTime, dangerSince, dangerLineWarning, particles, entities, activeSkill, gamePaused,
-      currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y
+      currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y,
+      playerBallScale: playerProgression.getBallScale()
     })
   });
 
@@ -138,6 +141,12 @@
   }
 
   const { Engine, Bodies, Body, Sleeping, Composite, Events } = Matter;
+  const ballSizeManager = window.DDMGameBallSizes.createBallSizeManager({
+    Body,
+    getEntities: () => entities,
+    getBaseRadius: (level) => MELANIN_LEVELS[level].diameter / 2,
+    getPlayerScale: () => playerProgression.getBallScale()
+  });
   // Sleeping bodies can keep stale support after a DDM removal. The pile is small enough to simulate continuously.
   engine = Engine.create({ enableSleeping: false });
   engine.gravity.y = PHYSICS_GRAVITY;
@@ -201,7 +210,8 @@
 
   function createMelanin(level, x, y, options = {}) {
     const config = MELANIN_LEVELS[level];
-    const radius = config.diameter / 2;
+    const baseRadius = config.diameter / 2;
+    const radius = playerProgression.getScaledRadius(baseRadius);
     const body = Bodies.circle(x, y, radius, {
       label: `melanin-lv${level}`,
       restitution: options.special ? 0 : 0.2,
@@ -217,6 +227,7 @@
     const entity = {
       body,
       level,
+      baseRadius,
       radius,
       state: options.special ? 'special' : 'active',
       bornAt: gameTime,
@@ -283,7 +294,7 @@
   function spawnNextMelanin() {
     if (gamePaused) return;
     currentLevel = nextLevel;
-    const radius = MELANIN_LEVELS[currentLevel].diameter / 2;
+    const radius = ballSizeManager.getScaledRadius(currentLevel);
     const spawnX = isPointerInsidePlayfield ? lastValidDropX : PLAYFIELD_CENTER_X;
     currentDropX = clamp(spawnX, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4);
     if (isPointerInsidePlayfield) lastValidDropX = currentDropX;
@@ -432,7 +443,7 @@
   function updateDropPreviewPosition(point) {
     isPointerInsidePlayfield = true;
     if (currentLevel == null) return;
-    const radius = MELANIN_LEVELS[currentLevel].diameter / 2;
+    const radius = ballSizeManager.getScaledRadius(currentLevel);
     lastValidDropX = clamp(point.x, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4);
     currentDropX = lastValidDropX;
   }
@@ -449,7 +460,7 @@
   function dropMelanin(x, pointerType = 'mouse') {
     if (gamePaused || activeSkill || !readyToDrop || currentLevel == null) return;
     const level = currentLevel;
-    const radius = MELANIN_LEVELS[level].diameter / 2;
+    const radius = ballSizeManager.getScaledRadius(level);
     createMelanin(level, clamp(x, GAME_LEFT + radius + 3, GAME_RIGHT - radius - 3), DROP_Y + radius, {});
     readyToDrop = false;
     playPlayerAttackEffect(DROP_DAMAGE, 'drop');
@@ -493,7 +504,7 @@
     removeEntity(second, false);
     wakeAllMelaninBodies();
     registerCombo();
-    const radius = MELANIN_LEVELS[nextLevelValue].diameter / 2;
+    const radius = ballSizeManager.getScaledRadius(nextLevelValue);
     const safeX = clamp(x, GAME_LEFT + radius + 2, GAME_RIGHT - radius - 2);
     const safeY = clamp(y, GAME_TOP + radius + 4, GAME_FLOOR - radius - 4);
     const damage = calculateMergeDamage(first.level, nextLevelValue);
@@ -517,7 +528,18 @@
       if (!entities.has(maxBlob.body.id) || maxBlob.completionCounted) return;
       if (!removeEntity(maxBlob)) return;
       maxBlob.completionCounted = true;
-      if (source === 'merge') grantMergeMaxReward();
+      if (source === 'merge') {
+        const rewardMessage = grantMergeMaxReward();
+        if (playerProgression.levelUp()) {
+          ballSizeManager.resizeAllBalls();
+          wakeAllMelaninBodies();
+          renderer.draw();
+          showToast('DDM分子效率已提升', 1400, true);
+          if (rewardMessage) schedule(() => showToast(rewardMessage, 2100, true), 1400);
+        } else if (rewardMessage) {
+          showToast(rewardMessage, 2100, true);
+        }
+      }
       emitParticles(x, y, '#82d8bd', 19);
     }, MAX_PRESENTATION_DURATION);
   }
@@ -526,14 +548,13 @@
     currentRunMaxMergeCount += 1;
     const rewardSkill = window.DDMGameSkills.chooseMaxRewardSkill(ddmUses, sswUses, SKILL_CONFIG.maxUses);
     if (!rewardSkill) {
-      showToast('MAX 合成獎勵：技能次數皆已達上限', 2100, true);
-      return;
+      return 'MAX 合成獎勵：技能次數皆已達上限';
     }
 
     addSkillUses(rewardSkill);
     updateSkillUI();
     const rewardLabel = rewardSkill === 'ddm' ? 'DDM' : 'SSW+1';
-    showToast('MAX 合成獎勵：' + rewardLabel + ' 次數 +1（目前 ×' + getSkillUses(rewardSkill) + '）', 2100, true);
+    return 'MAX 合成獎勵：' + rewardLabel + ' 次數 +1（目前 ×' + getSkillUses(rewardSkill) + '）';
   }
 
   function registerCombo() {
@@ -876,6 +897,7 @@
     combat.updateUI();
     currentRunHighestLevel = 0;
     currentRunMaxMergeCount = 0;
+    playerProgression.reset();
     ddmUses = SKILL_CONFIG.initialUses;
     sswUses = SKILL_CONFIG.initialUses;
     currentLevel = null;
@@ -926,7 +948,7 @@
 
   function debugSpawn(level) {
     if (gamePaused) return;
-    const radius = MELANIN_LEVELS[level].diameter / 2;
+    const radius = ballSizeManager.getScaledRadius(level);
     let spawnX = currentDropX;
     if (!isPointerInsidePlayfield) {
       spawnX = LOGICAL_WIDTH / 2 + debugSide * Math.min(radius * 0.62, 52);
