@@ -9,7 +9,7 @@
   const {
     DEBUG, REFERENCE_WIDTH, REFERENCE_HEIGHT, DANGER_ZONE_DIAMETER_MULTIPLIER, LAYOUT,
     LOGICAL_WIDTH, LOGICAL_HEIGHT, PLAYFIELD_WIDTH, PLAYFIELD_HEIGHT, SKILL_CONFIG, DROP_DAMAGE,
-    GAME_OVER_DELAY, DROP_COOLDOWN, PHYSICS_GRAVITY, PHYSICS_GRAVITY_SCALE, PHYSICS_TIMESTEP,
+    DANGER_DURATION, CENTRAL_TOAST_DURATION_MULTIPLIER, WHITE_SCORE_DROP_LEVELS, DROP_COOLDOWN, PHYSICS_GRAVITY, PHYSICS_GRAVITY_SCALE, PHYSICS_TIMESTEP,
     MAX_PHYSICS_STEPS_PER_FRAME, MERGE_DELAY, DDM_FADE_DURATION, MAX_PRESENTATION_DURATION,
     COMBO_WINDOW, MAX_MELANIN_BONUS, BOSS_CONFIG, SCORE_TABLE, GAME_LEFT, GAME_RIGHT,
     PLAYFIELD_CENTER_X, GAME_TOP, GAME_FLOOR, DROP_Y, WALL_THICKNESS, WALL_EXTENSION,
@@ -55,6 +55,11 @@
   const restartButtonEl = document.querySelector('#restart-button');
   const continueButtonEl = document.querySelector('#continue-button');
   const bossTargetEl = document.querySelector('#boss-target');
+  const bossNameEl = document.querySelector('#boss-name');
+  const bossTransitionEl = document.querySelector('#boss-transition');
+  const bossTransitionKickerEl = document.querySelector('#boss-transition-kicker');
+  const bossTransitionTitleEl = document.querySelector('#boss-transition-title');
+  const bossTransitionNextEl = document.querySelector('#boss-transition-next');
   const playerNameEl = document.querySelector('#player-name');
   const bossHealthCardEl = document.querySelector('#boss-health-card');
   const bossHpLabelEl = document.querySelector('#boss-hp-label');
@@ -78,10 +83,10 @@
   let particles = [];
   let currentRunHighestLevel = 0;
   let currentRunMaxMergeCount = 0;
-  let ddmUses = SKILL_CONFIG.initialUses;
-  let sswUses = SKILL_CONFIG.initialUses;
+  let ddmUses = SKILL_CONFIG.ddmInitialUses;
+  let sswUses = SKILL_CONFIG.sswInitialUses;
   let currentLevel = null;
-  let nextLevel = randomDropLevel();
+  let nextLevel;
   let readyToDrop = true;
   let activeSkill = null;
   let ddmBusy = false;
@@ -90,7 +95,7 @@
   let bossDefeated = false;
   let continuedAfterVictory = false;
   let activeEndState = null;
-  const deferredVictoryMerges = [];
+  const deferredPausedMerges = [];
   let lastFrame = 0;
   let gameTime = 0;
   let physicsAccumulator = 0;
@@ -111,12 +116,13 @@
 
   const combat = window.DDMGameCombat.createCombatSystem({
     config: BOSS_CONFIG,
-    bossTargetEl, bossHealthCardEl, bossHpLabelEl, bossHpTrackEl, bossHpFillEl, bossHpValueEl,
+    bossTargetEl, bossHealthCardEl, bossNameEl, bossHpLabelEl, bossHpTrackEl, bossHpFillEl, bossHpValueEl,
     isPaused: () => gamePaused,
     schedule,
     formatNumber,
     onBossDefeated: handleBossDefeat
   });
+  nextLevel = randomDropLevel();
   const attackEffects = window.DDMGameEffects.createAttackEffects({
     BOSS_CONFIG, attackEffectsEl, bossCoreEl, playerAttackOriginEl,
     getLayoutMetrics, getGameMode: () => combat.mode, getBossHp: () => combat.bossHp,
@@ -188,6 +194,11 @@
   requestAnimationFrame(frame);
 
   function randomDropLevel() {
+    if (combat.mode === 'whiteScore') {
+      const index = Math.floor(Math.random() * WHITE_SCORE_DROP_LEVELS.length);
+      return WHITE_SCORE_DROP_LEVELS[index];
+    }
+
     const poolMaxLevel = getSpawnPoolMaxLevel(currentRunHighestLevel);
     return 1 + Math.floor(Math.random() * poolMaxLevel);
   }
@@ -468,9 +479,7 @@
     // Touch has no hover position to carry forward; each newly prepared piece starts centered.
     if (pointerType === 'touch') isPointerInsidePlayfield = false;
     spawnNextMelanin();
-    schedule(() => {
-      if (!gamePaused) readyToDrop = true;
-    }, DROP_COOLDOWN);
+    schedule(() => { readyToDrop = true; }, DROP_COOLDOWN);
   }
 
   function handleCollision(event) {
@@ -497,7 +506,7 @@
   function mergeMelanin(first, second, nextLevelValue, x, y) {
     if (!entities.has(first.body.id) || !entities.has(second.body.id)) return;
     if (gamePaused) {
-      if (activeEndState === 'victory') deferredVictoryMerges.push([first, second, nextLevelValue, x, y]);
+      if (combat.isBossTransitioning || activeEndState === 'victory') deferredPausedMerges.push([first, second, nextLevelValue, x, y]);
       return;
     }
     removeEntity(first, false);
@@ -534,7 +543,7 @@
           ballSizeManager.resizeAllBalls();
           wakeAllMelaninBodies();
           renderer.draw();
-          showToast('DDM分子效率已提升', 1400, true);
+          showToast('升級：DDM分子效率提升，分子尺寸-2%', 1400, true);
           if (rewardMessage) schedule(() => showToast(rewardMessage, 2100, true), 1400);
         } else if (rewardMessage) {
           showToast(rewardMessage, 2100, true);
@@ -546,7 +555,9 @@
 
   function grantMergeMaxReward() {
     currentRunMaxMergeCount += 1;
-    const rewardSkill = window.DDMGameSkills.chooseMaxRewardSkill(ddmUses, sswUses, SKILL_CONFIG.maxUses);
+    const rewardSkill = window.DDMGameSkills.chooseMaxRewardSkill(
+      ddmUses, sswUses, SKILL_CONFIG.ddmMaxUses, SKILL_CONFIG.sswMaxUses
+    );
     if (!rewardSkill) {
       return 'MAX 合成獎勵：技能次數皆已達上限';
     }
@@ -613,9 +624,13 @@
     else sswUses = uses;
   }
 
+  function getSkillMaxUses(skill) {
+    return skill === 'ddm' ? SKILL_CONFIG.ddmMaxUses : SKILL_CONFIG.sswMaxUses;
+  }
+
   function addSkillUses(skill, amount = 1) {
     const before = getSkillUses(skill);
-    setSkillUses(skill, Math.min(SKILL_CONFIG.maxUses, before + amount));
+    setSkillUses(skill, Math.min(getSkillMaxUses(skill), before + amount));
     return getSkillUses(skill) > before;
   }
 
@@ -716,8 +731,10 @@
   function updateSkillUI() {
     const ddmSelected = activeSkill === 'ddm';
     const sswSelected = activeSkill === 'ssw';
-    ddmCountEl.textContent = `× ${ddmUses}`;
-    sswCountEl.textContent = `× ${sswUses}`;
+    ddmCountEl.textContent = `× ${ddmUses} / ${SKILL_CONFIG.ddmMaxUses}`;
+    sswCountEl.textContent = `× ${sswUses} / ${SKILL_CONFIG.sswMaxUses}`;
+    ddmButton.setAttribute('aria-label', `直接使用DDM，持有 ${ddmUses} 次，上限 ${SKILL_CONFIG.ddmMaxUses} 次`);
+    sswButton.setAttribute('aria-label', `使用SSW+1，持有 ${sswUses} 次，上限 ${SKILL_CONFIG.sswMaxUses} 次`);
     ddmButton.disabled = ddmUses <= 0 || ddmBusy || gamePaused;
     sswButton.disabled = sswUses <= 0 || ddmBusy || gamePaused;
     ddmButton.classList.toggle('is-active', ddmSelected);
@@ -758,7 +775,8 @@
     toastEl.classList.toggle('toast-success', success);
     toastEl.hidden = false;
     if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { toastEl.hidden = true; }, duration);
+    const visibleDuration = Math.round(duration * CENTRAL_TOAST_DURATION_MULTIPLIER);
+    toastTimer = setTimeout(() => { toastEl.hidden = true; }, visibleDuration);
   }
 
   function schedule(callback, delay) {
@@ -794,22 +812,22 @@
       dangerSince = gameTime;
       dangerLineWarning = true;
     }
-    if (gameTime - dangerSince >= GAME_OVER_DELAY) triggerGameOver();
+    if (gameTime - dangerSince >= DANGER_DURATION) triggerGameOver();
   }
 
   function showEndStateModal(type) {
     const content = {
       defeat: {
         badge: '↻', eyebrow: '再接再厲', title: '好可惜，再挑戰一次吧！',
-        copy: '黑色素暴君還沒被擊敗，重新整隊後再來一戰。', canContinue: false
+        copy: '這場連續 Boss 挑戰尚未完成，重新整隊後再來一戰。', canContinue: false
       },
       victory: {
-        badge: '✦', eyebrow: '挑戰完成', title: '勝利！你擊敗了黑色素暴君！',
-        copy: 'DDM 精華能量成功發揮效果。你可以繼續挑戰，或重開一局。', canContinue: true
+        badge: '✦', eyebrow: '挑戰完成', title: '勝利！五隻 Boss 全部擊破！',
+        copy: 'DDM 精華能量成功發揮效果。你可以繼續累積 WHITE SCORE，或重開一局。', canContinue: true
       },
       continued: {
         badge: '★', eyebrow: '續戰完成', title: '表現很棒！',
-        copy: `你已經擊敗黑色素暴君，還在勝利後繼續奮戰，累積 WHITE SCORE ${formatNumber(combat.whiteScore)}。`, canContinue: false
+        copy: `你已經擊敗全部五隻 Boss，還在勝利後繼續奮戰，累積 WHITE SCORE ${formatNumber(combat.whiteScore)}。`, canContinue: false
       }
     }[type];
     if (!content) return;
@@ -825,9 +843,9 @@
     (content.canContinue ? continueButtonEl : restartButtonEl).focus({ preventScroll: true });
   }
 
-  function handleBossDefeat(impactEffect) {
-    if (combat.mode !== 'boss' || bossDefeated) return;
-    bossDefeated = true;
+  function handleBossDefeat({ defeatedBoss, nextBoss, isFinalBoss, impactEffect }) {
+    if (combat.mode !== 'boss' || gamePaused || bossDefeated) return;
+    if (isFinalBoss) bossDefeated = true;
     gamePaused = true;
     dangerSince = null;
     dangerLineWarning = false;
@@ -838,8 +856,48 @@
     modeBanner.hidden = true;
     canvas.classList.remove('ddm-selecting', 'ssw-selecting');
     cancelUnresolvedBossAttacks(impactEffect);
-    showEndStateModal('victory');
     updateSkillUI();
+    showBossTransition(defeatedBoss, nextBoss, isFinalBoss);
+
+    schedule(() => {
+      if (isFinalBoss) {
+        hideBossTransition();
+        showEndStateModal('victory');
+        updateSkillUI();
+        return;
+      }
+
+      combat.advanceBoss();
+      hideBossTransition();
+      resumeAfterBossTransition();
+    }, BOSS_CONFIG.transitionDuration);
+  }
+
+  function showBossTransition(defeatedBoss, nextBoss, isFinalBoss) {
+    bossTransitionKickerEl.textContent = isFinalBoss ? 'FINAL BOSS DEFEATED' : 'BOSS DEFEATED';
+    bossTransitionTitleEl.textContent = `BOSS ${defeatedBoss.name} 擊破！`;
+    bossTransitionNextEl.textContent = isFinalBoss
+      ? '所有黑色素 Boss 已擊破！'
+      : `NEXT BOSS · BOSS ${nextBoss.name} 即將出現`;
+    bossTransitionEl.hidden = false;
+    bossTransitionEl.classList.remove('is-active');
+    void bossTransitionEl.offsetWidth;
+    bossTransitionEl.classList.add('is-active');
+  }
+
+  function hideBossTransition() {
+    bossTransitionEl.classList.remove('is-active');
+    bossTransitionEl.hidden = true;
+  }
+
+  function resumeAfterBossTransition() {
+    gamePaused = false;
+    physicsAccumulator = 0;
+    lastFrame = performance.now();
+    if (currentLevel == null) spawnNextMelanin();
+    updateSkillUI();
+    const pendingMerges = deferredPausedMerges.splice(0);
+    for (const merge of pendingMerges) mergeMelanin(...merge);
   }
 
   function triggerGameOver() {
@@ -862,18 +920,21 @@
   }
 
   function continueAfterVictory() {
-    if (activeEndState !== 'victory' || !bossDefeated) return;
+    if (activeEndState !== 'victory' || !bossDefeated || !combat.continueAfterVictory()) return;
     activeEndState = null;
     continuedAfterVictory = true;
-    combat.continueAfterVictory();
     gameOver = false;
     gamePaused = false;
+    hideBossTransition();
     gameOverEl.hidden = true;
     physicsAccumulator = 0;
     lastFrame = performance.now();
-    if (currentLevel == null) spawnNextMelanin();
+    currentLevel = randomDropLevel();
+    nextLevel = randomDropLevel();
+    updateNextUI();
+    renderer.draw();
     readyToDrop = true;
-    const pendingMerges = deferredVictoryMerges.splice(0);
+    const pendingMerges = deferredPausedMerges.splice(0);
     updateSkillUI();
     for (const merge of pendingMerges) mergeMelanin(...merge);
   }
@@ -887,19 +948,20 @@
     Engine.clear(engine);
     entities.clear();
     particles = [];
-    deferredVictoryMerges.length = 0;
+    deferredPausedMerges.length = 0;
     clearBossAttackEffects();
     combat.reset();
     bossDefeated = false;
     continuedAfterVictory = false;
     activeEndState = null;
     bossTargetEl.classList.remove('is-hit');
+    hideBossTransition();
     combat.updateUI();
     currentRunHighestLevel = 0;
     currentRunMaxMergeCount = 0;
     playerProgression.reset();
-    ddmUses = SKILL_CONFIG.initialUses;
-    sswUses = SKILL_CONFIG.initialUses;
+    ddmUses = SKILL_CONFIG.ddmInitialUses;
+    sswUses = SKILL_CONFIG.sswInitialUses;
     currentLevel = null;
     nextLevel = randomDropLevel();
     isPointerInsidePlayfield = false;

@@ -5,9 +5,10 @@
     let playerLevel = 0;
 
     function getBallScale() {
+      const maxLevel = Math.max(0, Math.floor(Number(config.PLAYER_MAX_LEVEL) || 0));
       const reductionPerLevel = Math.max(0, Number(config.BALL_SIZE_REDUCTION_PER_PLAYER_LEVEL) || 0);
-      const minScale = Math.min(1, Math.max(0, Number(config.MIN_BALL_SCALE) || 0));
-      return Math.max(minScale, 1 - playerLevel * reductionPerLevel);
+      const cappedLevel = Math.min(playerLevel, maxLevel);
+      return Math.max(0, 1 - cappedLevel * reductionPerLevel);
     }
 
     function updatePlayerName(animate = false) {
@@ -24,7 +25,7 @@
     function levelUp() {
       const maxLevel = Math.max(0, Math.floor(Number(config.PLAYER_MAX_LEVEL) || 0));
       if (playerLevel >= maxLevel) return false;
-      playerLevel += 1;
+      playerLevel = Math.min(maxLevel, playerLevel + 1);
       updatePlayerName(true);
       return true;
     }

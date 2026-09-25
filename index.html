@@ -62,6 +62,15 @@
         </defs>
       </svg>
 
+      <section class="boss-transition" id="boss-transition" role="status" aria-live="assertive" hidden>
+        <div class="boss-transition-card">
+          <span class="boss-transition-spark" aria-hidden="true">✦</span>
+          <p class="boss-transition-kicker" id="boss-transition-kicker">BOSS DEFEATED</p>
+          <h2 id="boss-transition-title">BOSS A 擊破！</h2>
+          <p id="boss-transition-next">NEXT BOSS · BOSS B 即將出現</p>
+        </div>
+      </section>
+
       <aside class="boss-target" id="boss-target" aria-label="黑色素 Boss 敵方目標">
         <div class="boss-health" id="boss-health-card">
           <div class="boss-health-heading"><span id="boss-hp-label">BOSS HP</span><strong id="boss-hp-value">-- / --</strong></div>
@@ -97,7 +106,7 @@
             <path d="m70 53-8-18 20 14m88 4 8-18-20 14" fill="#d6ad68" stroke="#fff1c4" stroke-width="3" stroke-linejoin="round" />
           </svg>
         </div>
-        <div class="boss-caption"><span>RAID BOSS</span><strong>黑色素暴君</strong></div>
+        <div class="boss-caption"><span>RAID BOSS</span><strong id="boss-name">BOSS A</strong></div>
       </aside>
 
       <aside class="player-hero" aria-label="玩家角色，面向黑色素 Boss">
@@ -162,6 +171,14 @@
         <div class="next-level" id="next-level">LV 1</div>
       </aside>
 
+      <aside class="max-rule-card glass-panel" aria-label="Lv9 MAX 合成規則">
+        <span class="max-rule-icon" aria-hidden="true">✦</span>
+        <div class="max-rule-copy">
+          <strong>Lv9（MAX）</strong>
+          <p>合成後精華會消除，並隨機補充 1 次技能。</p>
+        </div>
+      </aside>
+
       <div class="mode-banner" id="mode-banner" role="status" aria-live="polite" hidden>
         <span class="mode-cross">✦</span><span id="skill-mode-message">選取一顆 DDM 精華使用技能</span><button id="cancel-skill" type="button" aria-label="取消技能選取">×</button>
       </div>
@@ -172,7 +189,7 @@
             <svg viewBox="0 0 52 64" role="img"><path d="M19 4h14v9l8 8v32a6 6 0 0 1-6 6H17a6 6 0 0 1-6-6V21l8-8z"/><path d="M19 13h14M11 27h30"/><path class="bottle-cross" d="M26 33v13M19.5 39.5h13"/><path class="bottle-drop" d="M16 51c3-4 7-4 10 0"/></svg>
           </span>
           <span class="ddm-copy"><strong>直接使用DDM</strong><small>標準傷害 × 25%</small></span>
-          <span class="ddm-count" id="ddm-count">× 1</span>
+          <span class="ddm-count" id="ddm-count">× 1 / 4</span>
           <span class="ddm-shine" aria-hidden="true"></span>
         </button>
         <p class="ddm-hint" id="ddm-hint">選取精華，轉化為攻擊能量</p>
@@ -182,7 +199,7 @@
         <button class="ssw-button skill-button" id="ssw-button" type="button" aria-pressed="false">
           <span class="ssw-icon" aria-hidden="true">✦</span>
           <span class="ddm-copy"><strong>使用SSW+1</strong><small>精華直接升級一階</small></span>
-          <span class="ddm-count" id="ssw-count">× 1</span>
+          <span class="ddm-count" id="ssw-count">× 1 / 1</span>
           <span class="ddm-shine" aria-hidden="true"></span>
         </button>
         <p class="ddm-hint" id="ssw-hint">選取一顆精華提升一級</p>

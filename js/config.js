@@ -36,15 +36,24 @@
   }
 
   const SKILL_CONFIG = Object.freeze({
-    initialUses: 1,
-    maxUses: 3,
+    ddmInitialUses: 1,
+    sswInitialUses: 1,
+    ddmMaxUses: 4,
+    sswMaxUses: 1,
     directDdmDamageMultiplier: 0.25
   });
-  const PLAYER_MAX_LEVEL = 100;
+  const PLAYER_MAX_LEVEL = 10;
   const BALL_SIZE_REDUCTION_PER_PLAYER_LEVEL = 0.02;
-  const MIN_BALL_SCALE = 0.25;
+  const WHITE_SCORE_DROP_LEVELS = Object.freeze([1, 2, 3, 4, 5]);
   const BOSS_CONFIG = Object.freeze({
-    maxHp: 8000,
+    bosses: Object.freeze([
+      Object.freeze({ name: 'A', maxHp: 3000 }),
+      Object.freeze({ name: 'B', maxHp: 5000 }),
+      Object.freeze({ name: 'C', maxHp: 8000 }),
+      Object.freeze({ name: 'D', maxHp: 15000 }),
+      Object.freeze({ name: 'E', maxHp: 25000 })
+    ]),
+    transitionDuration: 1800,
     projectileTravelDuration: 460,
     impactDuration: 360,
     hitReactionDuration: 270
@@ -64,9 +73,10 @@
     SKILL_CONFIG,
     PLAYER_MAX_LEVEL,
     BALL_SIZE_REDUCTION_PER_PLAYER_LEVEL,
-    MIN_BALL_SCALE,
+    WHITE_SCORE_DROP_LEVELS,
     DROP_DAMAGE: 10,
-    GAME_OVER_DELAY: 2000,
+    DANGER_DURATION: 3600,
+    CENTRAL_TOAST_DURATION_MULTIPLIER: 1.5,
     DROP_COOLDOWN: 520,
     PHYSICS_GRAVITY: 1,
     PHYSICS_GRAVITY_SCALE: 0.00105,
