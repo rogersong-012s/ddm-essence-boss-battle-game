@@ -1,79 +1,117 @@
 # DDM Essence Merge — Melanin Boss Battle
 
-純 HTML、CSS、JavaScript 的 16:9 瀏覽器遊戲。遊戲保留西瓜合成與 Matter.js 物理基底：球體代表 DDM 精華，左側的黑色素暴君是 Boss。玩家合成精華累積能量，再由左下方的 DDM 守衛向 Boss 發射流星能量彈。無需建置流程，可直接開啟 `index.html`，也可部署到 GitHub Pages。Matter.js 0.20.0 與 Google Fonts 使用 CDN，首次遊玩需網路連線。
+以西瓜合成為基礎的 16:9 瀏覽器遊戲。球體代表 DDM 精華；玩家合成精華後，由左側的 DDM 守衛向黑色素 Boss 發射流星攻擊。遊戲使用原生 HTML、CSS、JavaScript 與 Matter.js，沒有建置或安裝步驟。Matter.js 0.20.0 和 Google Fonts 透過 CDN 載入，首次遊玩需要網路連線。
 
-## 本機遊玩
+## 開始遊戲
 
-直接開啟 `index.html`，或在本目錄執行：
+直接開啟 `index.html`，或在專案目錄啟動本機靜態伺服器：
 
 ```sh
 python -m http.server 8000 --bind 127.0.0.1
 ```
 
-接著瀏覽 `http://127.0.0.1:8000/`。
+再用瀏覽器開啟 <http://127.0.0.1:8000/>。
 
-## 操作與戰鬥流程
+## 操作方式
 
-- 移動游標選擇中央容器內的位置，點擊或觸控放下 NEXT 顯示的 DDM 精華。只有在容器內按下並於容器內放開才會掉球。
-- 兩顆同級精華自動合成並逐階升級，直到目前設定的 MAX 等級。
-- 每次玩家成功放下一顆新球，玩家角色會發出一顆流星，命中後透過共用 combat pipeline 造成 10 點傷害；Continue 後同一數值會加到 WHITE SCORE。合成傷害沿用 `SCORE_TABLE`：Lv 1 合成 5、Lv 2 合成 10、Lv 3 合成 20，後續等級依表遞增。MAX 合成傷害保留原有額外獎勵值。
-- 每次合成後，玩家角色會從法杖位置發出帶弧度的流星光彈。光彈抵達 Boss 後才扣除等同該次合成分數的 HP；合成點只保留球體生成與輕量粒子回饋。
-- Boss 初始生命值為 8,000。首次擊敗後可選擇繼續遊玩；Continue 會切換為從 0 開始、沒有上限的 WHITE SCORE 累積模式，勝利後續戰失敗會顯示最終累積值。DDM 與 SSW+1 初始各 2 次、上限各 3 次。只有正常合成達到 MAX 才會在 MAX 球消失後隨機補充一種技能 1 次；已滿的技能不會被抽中，兩者都滿時不補充。SSW+1 升到 MAX 不給獎勵。
-- 點擊右側「直接使用DDM」，再選取容器中的非 MAX 精華即可讓玩家發射流星攻擊，傷害為該等級標準傷害的 25%；Boss 戰中命中後扣 HP，WHITE SCORE 模式中命中後加到累積值。
-- 點擊右側「使用SSW+1」，再選取非 MAX 精華即可直接升級一階，並保留球的當下位置、速度與角速度；SSW+1 本身不造成 Damage 或增加 WHITE SCORE。若升級抵達 MAX，MAX 球會短暫展示後消失，但不補充技能、不造成傷害，也不觸發合成攻擊。最高等級精華會顯示 MAX 且不可選取，不會消耗次數。
-- DDM 與 SSW+1 使用互斥的選取模式；切換技能會取消前一個模式，選取中不能放球，按鈕或提示列的 × 可取消選取。
-- DDM 精華越過危險線並持續 2 秒會結束遊戲；重新開始會重置本局。
+- 在中央容器內移動游標選擇位置，點擊或觸控放下 NEXT 顯示的 DDM 精華。必須在容器內按下並在容器內放開，才會放球。
+- 兩顆相同等級的精華會依 Matter.js 物理碰撞合成並升一級。合成後由玩家角色發射流星，命中 Boss 時扣除傷害；合成位置只產生合成回饋，不是攻擊發射點。
+- 每次成功放球也會發動 10 點攻擊傷害。流星抵達目標後，傷害才會套用。
+- 右側「直接使用DDM」可選取非 MAX 精華發動技能，傷害為該等級標準合成傷害的 25%。
+- 右側「使用SSW+1」可選取非 MAX 精華，直接升級一階；此技能不造成傷害或增加 WHITE SCORE，並保留球的所在位置與運動狀態。
+- DDM 或 SSW+1 進入選取模式後，點技能按鈕或提示列的 × 可取消。技能選取期間不能放球。
+- 精華越過危險線並持續 3.6 秒會觸發 Game Over。
+
+## Boss 戰與 WHITE SCORE
+
+Boss 會依序登場，擊敗一隻後遊戲短暫暫停，再由下一隻接戰：
+
+| 順序 | Boss | 初始 HP |
+| ---: | --- | ---: |
+| 1 | Boss A | 3,000 |
+| 2 | Boss B | 5,000 |
+| 3 | Boss C | 8,000 |
+| 4 | Boss D | 15,000 |
+| 5 | Boss E | 25,000 |
+
+擊敗全部五隻 Boss 後，勝利畫面可選擇「繼續遊戲」或「重開一局」。繼續遊戲會進入 WHITE SCORE 模式：Boss 不會復活，分數從 0 開始累積；目前球與 NEXT 會重新產生，後續新球平均隨機取自 Lv1–Lv5。放球傷害、合成傷害與直接使用DDM的命中值會計入 WHITE SCORE。續戰後若 Game Over，結算畫面會顯示累積分數並提供重開選項。
+
+尚未擊敗全部 Boss 就 Game Over 時，會顯示一般失敗結算並提供重開。重開會回到 Boss A、3,000 HP、玩家等級 +0、100% 球體尺寸、WHITE SCORE 0 和 Boss 戰掉球模式；技能次數也會重置。精華色系選擇會保留。
+
+## 傷害、等級與技能
+
+合成傷害沿用 `SCORE_TABLE`。表中的等級是被合成的兩顆球等級；合成至 MAX 時另加 1,800 點：
+
+| 合成輸入 | 標準傷害 |
+| --- | ---: |
+| Lv1 + Lv1 | 5 |
+| Lv2 + Lv2 | 10 |
+| Lv3 + Lv3 | 20 |
+| Lv4 + Lv4 | 40 |
+| Lv5 + Lv5 | 80 |
+| Lv6 + Lv6 | 160 |
+| Lv7 + Lv7 | 320 |
+| Lv8 + Lv8 → Lv9 MAX | 640 + 1,800 = 2,440 |
+
+正常合成達到 Lv9 MAX，MAX 精華短暫顯示後會消失，並補充一級 DDM 守衛等級。每升一級，所有精華尺寸縮小 2%；玩家等級最高 +10，因此最小尺寸為基準的 80%。達到 +10 後仍可正常合成、造成 MAX 傷害並獲得技能次數，但不再升級或縮小球體。SSW+1 升到 MAX 不會增加玩家等級或技能次數。
+
+| 技能 | 初始持有 | 持有上限 | 效果 |
+| --- | ---: | ---: | --- |
+| 直接使用DDM | 1 次 | 4 次 | 對選取的非 MAX 精華造成標準傷害的 25% |
+| SSW+1 | 1 次 | 1 次 | 將選取的非 MAX 精華升級一階，不造成傷害 |
+
+每次正常合成產生 MAX 後，系統會在尚未達持有上限的技能中隨機補充一種 1 次；兩種技能都已滿時不補充。SSW+1 升到 MAX 不觸發這項獎勵。
 
 ## 主要設定
 
-`js/config.js` 集中遊戲尺寸、球體尺寸比例、合成傷害、Boss 生命值、技能次數、放球傷害、重力與物理步進設定：
+常用玩法與版面數值集中在 `js/config.js`：
 
 | 設定 | 數值 |
 | --- | ---: |
-| 邏輯畫面 | 1600 × 900 |
-| 中央遊戲區 | 460 × 630；頂端 GAME_TOP = 156 |
-| 危險線 | `PLAYFIELD_BOTTOM - SECOND_HIGHEST_LEVEL 直徑 × 2.2`；越線持續 2 秒結束 |
-| Boss 初始生命值 | 8,000 |
-| DDM 與 SSW+1 各自初始／上限 | 2／3 |
-| 玩家每次成功放球傷害 | 10 |
-| 直接使用DDM 傷害倍率 | 標準等級傷害 × 25% |
-| 正常 MAX 合成技能補充 | 從尚未滿次數的技能中隨機補一種 +1；兩者皆滿則不補，SSW+1 升到 MAX 不給獎勵 |
-| DDM 淡化時間 | 420 ms |
-| 物理更新 | 固定 60 Hz |
-| DDM 精華直徑 Lv 1–9 | 36、52、72、96、124、158、198、244、298 px |
+| 設計畫面 | 1600 × 900 |
+| 中央遊戲容器 | 460 × 630，頂端座標 156 |
+| Boss 數量 | 5 隻，依序出現 |
+| 玩家等級上限 | +10 |
+| 每級球體縮小 | 2% |
+| WHITE SCORE 掉球等級 | Lv1–Lv5，均勻隨機 |
+| 每次放球傷害 | 10 |
+| 危險線停留時間 | 3,600 ms |
+| 固定物理更新頻率 | 60 Hz |
+| 流星飛行／命中殘留／Boss 受擊反應 | 460／360／270 ms |
 
-`REFERENCE_WIDTH = 1600`、`REFERENCE_HEIGHT = 900` 是設計基準。`LAYOUT` 以此參考框定義 playfield、出生點、容器邊界與球徑。Matter.js 碰撞、球體繪製、容器操作都沿用既有座標系與合成流程。
+設計基準為 1600 × 900。`LAYOUT` 定義中央容器、掉球位置、邊界與 Lv1–Lv9 精華尺寸比例。`SCORE_TABLE` 是一般合成與直接使用DDM的共用傷害來源；`applyCombatValue()` 會依目前模式將命中值送往 Boss HP 或 WHITE SCORE。
 
-`SCORE_TABLE` 是合成分數與戰鬥數值的共用來源；`calculateMergeDamage()` 沿用其結果與 MAX 完成加成，DDM 技能也透過同一張表套用 `SKILL_CONFIG.directDdmDamageMultiplier`。`applyCombatValue()` 依戰鬥模式將命中值導向 Boss HP 或 WHITE SCORE。`MAX_LEVEL` 由球體等級資料計算，`SECOND_HIGHEST_LEVEL` 定義為 `MAX_LEVEL - 1`，危險線依該等級的實際球徑計算。SSW+1 一般只替換 Matter.js 球體並保留位置、速度與角速度；升到 MAX 時共用 MAX 球生成／消失流程，但只有正常合成會呼叫 MAX 合成獎勵，不會呼叫攻擊管線。技能次數上限、初始值與隨機 MAX 獎勵政策集中管理。
+## 專案結構
 
-攻擊光彈飛行維持 460 ms，命中殘留縮短為 360 ms，命中反應為 270 ms；各時間設定集中於 `BOSS_CONFIG`。
+所有 JavaScript 以一般 `<script defer>` 載入，不使用 ES Modules，遊戲可直接從 `file://` 開啟。
 
-## JavaScript 結構
+- `index.html`：遊戲介面、Canvas 與 Boss／玩家角色視覺。
+- `styles.css`：16:9 版面、動畫與 responsive UI。
+- `game.js`：Matter.js 世界、輸入、掉球、合成、技能、結算與系統協調。
+- `js/config.js`：共用玩法、物理、Boss 與版面設定。
+- `js/themes.js`：精華等級、主題與色票資料。
+- `js/skills.js`：MAX 合成技能獎勵抽選。
+- `js/combat.js`：五隻 Boss、生命值、WHITE SCORE 與戰鬥數值管線。
+- `js/effects.js`：玩家流星攻擊、命中動畫與特效清理。
+- `js/renderer.js`：Canvas 球體、容器、粒子與 NEXT 預覽。
+- `js/progression.js`：DDM 守衛等級與球體縮放倍率。
+- `js/ball-sizes.js`：Matter.js 球體尺寸更新。
 
-所有檔案以傳統 `<script defer>` 載入，不使用 ES Modules，確保遊戲仍可直接以 `file://.../index.html` 開啟。
+攻擊發射點與 Boss 中心依實際 DOM 邊界計算，再轉換到 1600 × 900 遊戲座標。流星沿弧線前進，包含發光核心、拖尾與命中特效；動畫結束後會清理，不會持續累積。Boss 與玩家角色位於容器外，並不參與 Matter.js 碰撞。
 
-- `game.js`：Matter.js 世界、輸入、掉球、合成、技能操作、結算狀態與各子系統協調。
-- `js/config.js`：共用尺寸與玩法常數。
-- `js/themes.js`：球體主題資料與色票。
-- `js/skills.js`：MAX 隨機技能獎勵的可用技能與抽選規則。
-- `js/combat.js`：Boss HP、戰鬥模式、WHITE SCORE 與統一 combat value 管線。
-- `js/effects.js`：玩家流星攻擊、命中動畫及動畫物件清理。
-- `js/renderer.js`：Canvas 球體、容器、粒子與預覽繪製。
+`.game-wrapper` 以 16:9 等比例縮放；視窗調整大小時會更新 UI 與 Canvas 繪製尺寸，不會重建物理世界或重置遊戲進度。精華色系可在右下方切換暖色或繽紛彩色；切換與重新開始都會保留目前選擇。
 
-玩家法杖發射點與 Boss SVG 中心都以實際 DOM 邊界定位，再轉換到共用的 1600 × 900 SVG 座標。投射物沿二次曲線飛行，包含發光核心、漸細拖尾、命中閃光與數值；有限時清理，不會累積在畫面中。Boss 與玩家的 X 軸由遊戲框左緣及容器左緣的實際 DOM 邊界計算，Boss 對齊 NEXT 上緣、玩家名稱底部對齊 SSW+1 卡片底部。玩家角色與 Boss 都在容器外，不參與 Matter.js 碰撞，也不攔截滑鼠或觸控。
+## GitHub Pages
 
-## 精華色系
+此專案是靜態網站，`index.html` 位於 repository 根目錄，無需建置。部署時在 GitHub repository 的 **Settings → Pages** 選擇從 branch 部署，branch 選 `main`、資料夾選 `/ (root)`，儲存後等待 GitHub Pages 完成發布。
 
-右下角「精華色系」切換器可在暖色與繽紛彩色之間切換；新載入遊戲預設使用繽紛彩色。切換只改變 DDM 精華外觀，不會重置 Boss HP、DDM、NEXT 或本局進度，重開本局也會保留目前選擇。兩套等級主題共用於場上精華與 NEXT 預覽。
+## 內部測試快捷鍵
 
-暖色主題：Lv1 `#FCEEE8`、Lv2 `#F9E1D7`、Lv3 `#F6D1C2`、Lv4 `#F2C0AF`、Lv5 `#EEAE9B`、Lv6 `#E99988`、Lv7 `#E28379`、Lv8 `#D96E69`、Lv9 `#CC5C5D`。
+`js/config.js` 的 `DEBUG` 預設為 `true`：
 
-繽紛彩色主題：Lv1 `#EF89AB`、Lv2 `#F18477`、Lv3 `#F3A15F`、Lv4 `#E7C45D`、Lv5 `#94C56E`、Lv6 `#67BBC5`、Lv7 `#7298D9`、Lv8 `#8D82D1`、Lv9 `#B174C2`。
+- `1`–`8`：在容器中生成指定等級精華。
+- `D`：嘗試各補充一次 DDM 與 SSW+1，不會超過技能持有上限。
+- `G`：直接觸發 Game Over 結算。
+- `R`：重新開始。
 
-## 開發快捷鍵
-
-`DEBUG` 預設為 `true`：按數字鍵放入對應等級的 DDM 精華（MAX 等級除外）、`D` 各補充一次 DDM 與 SSW+1 次數（不超過各自上限）、`G` 直接測試 Game Over 結算、`R` 重新開始。快捷鍵保留給內部測試，不顯示在遊戲畫面；發布正式版本時可將 `DEBUG` 設為 `false`。
-
-## Responsive 與物理
-
-`.game-wrapper` 以 `aspect-ratio: 16 / 9` 等比例縮放與置中；非 16:9 視窗保留完整遊戲框。ResizeObserver 會更新 UI scale 和 Canvas backing store，不重建 Matter 世界，因此視窗縮放不會重置 Boss HP、球、DDM、主題或本局進度。容器外誤觸保護、球掉落、碰撞、合成、NEXT、危險線與 Game Over 沿用原系統。
+快捷鍵不會顯示在遊戲畫面。發布正式版本前，可將 `DEBUG` 設為 `false`。
