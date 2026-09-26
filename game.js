@@ -9,7 +9,7 @@
   const {
     DEBUG, REFERENCE_WIDTH, REFERENCE_HEIGHT, DANGER_ZONE_DIAMETER_MULTIPLIER, LAYOUT,
     LOGICAL_WIDTH, LOGICAL_HEIGHT, PLAYFIELD_WIDTH, PLAYFIELD_HEIGHT, SKILL_CONFIG, DROP_DAMAGE,
-    DANGER_DURATION, CENTRAL_TOAST_DURATION_MULTIPLIER, WHITE_SCORE_DROP_LEVELS, DROP_COOLDOWN, PHYSICS_GRAVITY, PHYSICS_GRAVITY_SCALE, PHYSICS_TIMESTEP,
+    DANGER_DURATION_MS, CENTRAL_TOAST_DURATION_MULTIPLIER, WHITE_SCORE_DROP_LEVELS, DROP_COOLDOWN, PHYSICS_GRAVITY, PHYSICS_GRAVITY_SCALE, PHYSICS_TIMESTEP,
     MAX_PHYSICS_STEPS_PER_FRAME, MERGE_DELAY, DDM_FADE_DURATION, MAX_PRESENTATION_DURATION,
     COMBO_WINDOW, MAX_MELANIN_BONUS, BOSS_CONFIG, SCORE_TABLE, GAME_LEFT, GAME_RIGHT,
     PLAYFIELD_CENTER_X, GAME_TOP, GAME_FLOOR, DROP_Y, WALL_THICKNESS, WALL_EXTENSION,
@@ -34,6 +34,7 @@
   const wrapper = document.querySelector('.game-wrapper');
   const nextEl = document.querySelector('#next-level');
   const nextPreviewEl = document.querySelector('#next-preview');
+  const maxRuleDescriptionEl = document.querySelector('#max-rule-description');
   const ddmButton = document.querySelector('#ddm-button');
   const ddmCountEl = document.querySelector('#ddm-count');
   const ddmPanel = document.querySelector('.ddm-panel');
@@ -54,6 +55,8 @@
   const finalHighestEl = document.querySelector('#final-highest');
   const restartButtonEl = document.querySelector('#restart-button');
   const continueButtonEl = document.querySelector('#continue-button');
+  const startWhiteModeButtonEl = document.querySelector('#start-white-mode-button');
+  const endStatsEl = document.querySelector('.over-stats');
   const bossTargetEl = document.querySelector('#boss-target');
   const bossNameEl = document.querySelector('#boss-name');
   const bossTransitionEl = document.querySelector('#boss-transition');
@@ -106,6 +109,7 @@
   let lastValidDropX = PLAYFIELD_CENTER_X;
   let currentDropX = PLAYFIELD_CENTER_X;
   let dangerSince = null;
+  const dangerTimer = window.DDMGameDangerZone.createDangerTimer(DANGER_DURATION_MS);
   let dangerLineWarning = false;
   let lastMergeTime = -Infinity;
   let comboCount = 0;
@@ -135,7 +139,7 @@
     getState: () => ({
       gameTime, dangerSince, dangerLineWarning, particles, entities, activeSkill, gamePaused,
       currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y,
-      playerBallScale: playerProgression.getBallScale()
+      playerBallScale: playerProgression.getBallScale(), uiScale: getUIScale()
     })
   });
 
@@ -187,7 +191,8 @@
   sswButton.addEventListener('click', () => toggleSkillMode('ssw'));
   document.querySelector('#cancel-skill').addEventListener('click', cancelSkillMode);
   restartButtonEl.addEventListener('click', restartGame);
-  continueButtonEl.addEventListener('click', continueAfterVictory);
+  continueButtonEl.addEventListener('click', showWhiteModeRules);
+  startWhiteModeButtonEl.addEventListener('click', startWhiteMode);
   document.querySelector('#restart-top').addEventListener('click', restartGame);
   window.addEventListener('keydown', handleDebugKey);
 
@@ -242,6 +247,7 @@
       radius,
       state: options.special ? 'special' : 'active',
       bornAt: gameTime,
+      dangerBornAt: Number.isFinite(options.dangerBornAt) ? options.dangerBornAt : gameTime,
       stateAt: gameTime,
       special: Boolean(options.special),
       mergedInto: false
@@ -509,6 +515,7 @@
       if (combat.isBossTransitioning || activeEndState === 'victory') deferredPausedMerges.push([first, second, nextLevelValue, x, y]);
       return;
     }
+    const dangerBornAt = Math.min(first.dangerBornAt, second.dangerBornAt);
     removeEntity(first, false);
     removeEntity(second, false);
     wakeAllMelaninBodies();
@@ -522,7 +529,7 @@
       resolveMaxBall(safeX, safeY, 'merge');
       return;
     }
-    const result = createMelanin(nextLevelValue, safeX, safeY);
+    const result = createMelanin(nextLevelValue, safeX, safeY, { dangerBornAt });
     result.popFrom = gameTime;
     emitParticles(safeX, safeY, '#efc782', 9);
   }
@@ -556,16 +563,19 @@
   function grantMergeMaxReward() {
     currentRunMaxMergeCount += 1;
     const rewardSkill = window.DDMGameSkills.chooseMaxRewardSkill(
-      ddmUses, sswUses, SKILL_CONFIG.ddmMaxUses, SKILL_CONFIG.sswMaxUses
+      ddmUses, sswUses, SKILL_CONFIG.ddmMaxUses, SKILL_CONFIG.sswMaxUses, combat.mode
     );
     if (!rewardSkill) {
-      return 'MAX 合成獎勵：技能次數皆已達上限';
+      return combat.mode === 'whiteScore'
+        ? 'WHITE MODE MAX 獎勵：DDM 次數已達上限'
+        : 'MAX 合成獎勵：技能次數皆已達上限';
     }
 
     addSkillUses(rewardSkill);
     updateSkillUI();
     const rewardLabel = rewardSkill === 'ddm' ? 'DDM' : 'SSW+1';
-    return 'MAX 合成獎勵：' + rewardLabel + ' 次數 +1（目前 ×' + getSkillUses(rewardSkill) + '）';
+    const rewardPrefix = combat.mode === 'whiteScore' ? 'WHITE MODE MAX 獎勵：' : 'MAX 合成獎勵：';
+    return rewardPrefix + rewardLabel + ' 次數 +1（目前 ×' + getSkillUses(rewardSkill) + '）';
   }
 
   function registerCombo() {
@@ -719,7 +729,7 @@
       resolveMaxBall(x, y, 'ssw');
       return;
     }
-    const upgraded = createMelanin(nextLevelValue, x, y);
+    const upgraded = createMelanin(nextLevelValue, x, y, { dangerBornAt: target.dangerBornAt });
     Body.setAngle(upgraded.body, angle);
     Body.setVelocity(upgraded.body, velocity);
     Body.setAngularVelocity(upgraded.body, angularVelocity);
@@ -748,7 +758,12 @@
       : ddmUses <= 0 ? 'MAX 合成可補充技能次數' : '選取精華，轉化為攻擊能量';
     sswHint.textContent = sswSelected
       ? '點選精華升級一階，不造成傷害'
-      : sswUses <= 0 ? 'MAX 合成可補充技能次數' : '選取一顆精華提升一級';
+      : sswUses <= 0
+        ? combat.mode === 'whiteScore' ? 'WHITE MODE 不會補充 SSW+1' : 'MAX 合成可補充技能次數'
+        : '選取一顆精華提升一級';
+    maxRuleDescriptionEl.textContent = combat.mode === 'whiteScore'
+      ? 'WHITE MODE：MAX 合成只補充 DDM，不再補充 SSW+1。'
+      : '合成後精華會消除，並隨機補充 1 次技能。';
   }
 
   function calculateMergeScore(level) {
@@ -798,21 +813,17 @@
   }
 
   function checkGameOver() {
-    const isInDanger = [...entities.values()].some((entity) => {
-      if (entity.level >= MAX_LEVEL || entity.special || entity.state !== 'active') return false;
-      if (gameTime - entity.bornAt < 1450) return false;
-      return entity.body.position.y - entity.radius < DANGER_LINE_Y;
-    });
-    if (!isInDanger) {
-      dangerSince = null;
-      dangerLineWarning = false;
-      return;
-    }
-    if (dangerSince == null) {
-      dangerSince = gameTime;
-      dangerLineWarning = true;
-    }
-    if (gameTime - dangerSince >= DANGER_DURATION) triggerGameOver();
+    const occupied = window.DDMGameDangerZone.hasDangerOccupant(entities.values(), gameTime, DANGER_LINE_Y, MAX_LEVEL);
+    const status = dangerTimer.update(occupied, gameTime);
+    dangerSince = status.startedAt;
+    dangerLineWarning = status.occupied;
+    if (status.expired) triggerGameOver();
+  }
+
+  function resetDangerState() {
+    dangerTimer.reset();
+    dangerSince = null;
+    dangerLineWarning = false;
   }
 
   function showEndStateModal(type) {
@@ -833,6 +844,9 @@
     if (!content) return;
 
     activeEndState = type;
+    startWhiteModeButtonEl.hidden = true;
+    restartButtonEl.hidden = false;
+    endStatsEl.hidden = false;
     endStateBadgeEl.textContent = content.badge;
     endStateEyebrowEl.textContent = content.eyebrow;
     gameOverTitleEl.textContent = content.title;
@@ -847,8 +861,7 @@
     if (combat.mode !== 'boss' || gamePaused || bossDefeated) return;
     if (isFinalBoss) bossDefeated = true;
     gamePaused = true;
-    dangerSince = null;
-    dangerLineWarning = false;
+    resetDangerState();
     resetPointerGesture();
     isPointerInsidePlayfield = false;
     activeSkill = null;
@@ -904,8 +917,7 @@
     if (gameOver || gamePaused) return;
     gameOver = true;
     gamePaused = true;
-    dangerSince = null;
-    dangerLineWarning = false;
+    resetDangerState();
     resetPointerGesture();
     isPointerInsidePlayfield = false;
     // Timed clean-up still runs (for example, an already-earned MAX merge reward).
@@ -919,8 +931,22 @@
     updateSkillUI();
   }
 
-  function continueAfterVictory() {
-    if (activeEndState !== 'victory' || !bossDefeated || !combat.continueAfterVictory()) return;
+  function showWhiteModeRules() {
+    if (activeEndState !== 'victory' || !bossDefeated || gameOverEl.hidden) return;
+    activeEndState = 'whiteModeIntro';
+    endStateBadgeEl.textContent = '✦';
+    endStateEyebrowEl.textContent = '續戰規則';
+    gameOverTitleEl.textContent = 'WHITE MODE';
+    gameOverCopyEl.textContent = '進入 WHITE MODE 後，Lv9（MAX）的技能獎勵只會補充 DDM，不再補充 SSW+1。挑戰更高 WHITE SCORE！';
+    endStatsEl.hidden = true;
+    continueButtonEl.hidden = true;
+    restartButtonEl.hidden = true;
+    startWhiteModeButtonEl.hidden = false;
+    startWhiteModeButtonEl.focus({ preventScroll: true });
+  }
+
+  function startWhiteMode() {
+    if (activeEndState !== 'whiteModeIntro' || !bossDefeated || !combat.continueAfterVictory()) return;
     activeEndState = null;
     continuedAfterVictory = true;
     gameOver = false;
@@ -934,6 +960,10 @@
     updateNextUI();
     renderer.draw();
     readyToDrop = true;
+    startWhiteModeButtonEl.hidden = true;
+    restartButtonEl.hidden = false;
+    continueButtonEl.hidden = true;
+    endStatsEl.hidden = false;
     const pendingMerges = deferredPausedMerges.splice(0);
     updateSkillUI();
     for (const merge of pendingMerges) mergeMelanin(...merge);
@@ -973,8 +1003,7 @@
     ddmBusy = false;
     gameOver = false;
     gamePaused = false;
-    dangerSince = null;
-    dangerLineWarning = false;
+    resetDangerState();
     lastMergeTime = -Infinity;
     comboCount = 0;
     gameTime = 0;
@@ -984,6 +1013,9 @@
     modeBanner.hidden = true;
     gameOverEl.hidden = true;
     continueButtonEl.hidden = true;
+    startWhiteModeButtonEl.hidden = true;
+    restartButtonEl.hidden = false;
+    endStatsEl.hidden = false;
     canvas.classList.remove('ddm-selecting', 'ssw-selecting');
     createWalls();
     updateSkillUI();
@@ -1017,7 +1049,7 @@
       debugSide *= -1;
     }
     const entity = createMelanin(level, clamp(spawnX, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4), Math.round(LOGICAL_HEIGHT * LAYOUT.debugSpawnY));
-    entity.bornAt = gameTime - 1500;
+    entity.dangerBornAt = gameTime - 1500;
     showToast(`Lv ${level} DDM 精華`, 900);
   }
 

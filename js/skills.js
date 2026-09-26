@@ -1,7 +1,9 @@
 (function (global) {
   'use strict';
 
-  function chooseMaxRewardSkill(ddmUses, sswUses, ddmMaxUses, sswMaxUses, random = Math.random) {
+  function chooseMaxRewardSkill(ddmUses, sswUses, ddmMaxUses, sswMaxUses, gameMode = 'boss', random = Math.random) {
+    if (gameMode === 'whiteScore') return ddmUses < ddmMaxUses ? 'ddm' : null;
+
     const availableSkills = [];
     if (ddmUses < ddmMaxUses) availableSkills.push('ddm');
     if (sswUses < sswMaxUses) availableSkills.push('ssw');

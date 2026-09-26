@@ -1,6 +1,14 @@
 (function (global) {
   'use strict';
 
+  function calculateNextPreviewRadius(level, width, height, levels, uiScale = 1) {
+    const levelConfig = levels[level];
+    if (!levelConfig || !(levelConfig.diameter > 0) || !(width > 0) || !(height > 0) || !(uiScale > 0)) return 0;
+    const baseRadiusInUiPixels = levelConfig.diameter / 2 * uiScale;
+    const previewMaxRadius = Math.min(width, height) * .49;
+    return Math.min(baseRadiusInUiPixels, previewMaxRadius);
+  }
+
   function createRenderer(options) {
     const { canvas, ctx, nextPreviewCanvas, nextPreviewCtx, config, getState, clamp } = options;
     const MAX_LEVEL = config.LAYOUT.ballDiameterRatios.length - 1;
@@ -11,13 +19,13 @@
     } = config;
     let {
       gameTime, dangerSince, dangerLineWarning, particles, entities, activeSkill, gamePaused,
-      currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y, playerBallScale
+      currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y, playerBallScale, uiScale
     } = getState();
 
     function syncState() {
       ({
         gameTime, dangerSince, dangerLineWarning, particles, entities, activeSkill, gamePaused,
-        currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y, playerBallScale
+        currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y, playerBallScale, uiScale
       } = getState());
     }
 
@@ -47,7 +55,7 @@
       const height = nextPreviewCanvas.clientHeight;
       if (!width || !height) return;
       nextPreviewCtx.clearRect(0, 0, width, height);
-      const radius = Math.min(MELANIN_LEVELS[nextLevel].diameter / 2 * playerBallScale, Math.min(width, height) * .3);
+      const radius = calculateNextPreviewRadius(nextLevel, width, height, MELANIN_LEVELS, uiScale);
       drawMelanin(width / 2, height / 2, nextLevel, radius, 1, 1, false, 0, nextPreviewCtx);
     }
 
@@ -465,5 +473,5 @@
     return Object.freeze({ draw, resizeNextPreview });
   }
 
-  global.DDMGameRenderer = Object.freeze({ createRenderer });
+  global.DDMGameRenderer = Object.freeze({ createRenderer, calculateNextPreviewRadius });
 })(window);

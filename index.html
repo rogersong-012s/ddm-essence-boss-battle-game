@@ -17,6 +17,7 @@
   <script defer src="js/renderer.js"></script>
   <script defer src="js/progression.js"></script>
   <script defer src="js/ball-sizes.js"></script>
+  <script defer src="js/danger-zone.js"></script>
   <script defer src="game.js"></script>
 </head>
 <body>
@@ -163,47 +164,53 @@
         <div class="player-caption"><span>PLAYER</span><strong id="player-name">DDM守衛+0</strong></div>
       </aside>
 
-      <aside class="next-panel glass-panel" aria-label="下一顆 DDM 精華">
-        <div class="panel-kicker">NEXT <span class="next-label">下一顆</span></div>
-        <div class="next-preview-wrap" id="next-preview" data-level="1" aria-hidden="true">
-          <canvas class="next-preview-canvas" id="next-preview-canvas"></canvas>
-        </div>
-        <div class="next-level" id="next-level">LV 1</div>
-      </aside>
+      <aside class="right-panel" aria-label="下一顆與技能資訊">
+        <section class="right-panel-next" aria-label="下一顆精華預覽">
+          <aside class="next-panel glass-panel" aria-label="下一顆 DDM 精華">
+            <div class="panel-kicker">NEXT <span class="next-label">下一顆</span></div>
+            <div class="next-preview-wrap" id="next-preview" data-level="1" aria-hidden="true">
+              <canvas class="next-preview-canvas" id="next-preview-canvas"></canvas>
+            </div>
+            <div class="next-level" id="next-level">LV 1</div>
+          </aside>
+        </section>
 
-      <aside class="max-rule-card glass-panel" aria-label="Lv9 MAX 合成規則">
-        <span class="max-rule-icon" aria-hidden="true">✦</span>
-        <div class="max-rule-copy">
-          <strong>Lv9（MAX）</strong>
-          <p>合成後精華會消除，並隨機補充 1 次技能。</p>
-        </div>
+        <aside class="max-rule-card glass-panel" aria-label="Lv9 MAX 合成規則">
+          <span class="max-rule-icon" aria-hidden="true">✦</span>
+          <div class="max-rule-copy">
+            <strong>LV 9 (MAX) 精華</strong>
+            <p id="max-rule-description">合成後精華消除，並隨機補充 1 次技能。</p>
+          </div>
+        </aside>
+
+        <section class="right-skills" aria-label="技能">
+          <aside class="ddm-panel" aria-label="直接使用DDM">
+            <button class="ddm-button skill-button" id="ddm-button" type="button" aria-pressed="false">
+              <span class="ddm-icon" aria-hidden="true">
+                <svg viewBox="0 0 52 64" role="img"><path d="M19 4h14v9l8 8v32a6 6 0 0 1-6 6H17a6 6 0 0 1-6-6V21l8-8z"/><path d="M19 13h14M11 27h30"/><path class="bottle-cross" d="M26 33v13M19.5 39.5h13"/><path class="bottle-drop" d="M16 51c3-4 7-4 10 0"/></svg>
+              </span>
+              <span class="ddm-copy"><strong>直接使用DDM</strong><small>標準傷害 × 25%</small></span>
+              <span class="ddm-count" id="ddm-count">× 1 / 4</span>
+              <span class="ddm-shine" aria-hidden="true"></span>
+            </button>
+            <p class="ddm-hint" id="ddm-hint">選取精華，轉化為攻擊能量</p>
+          </aside>
+
+          <aside class="ssw-panel" aria-label="使用SSW+1">
+            <button class="ssw-button skill-button" id="ssw-button" type="button" aria-pressed="false">
+              <span class="ssw-icon" aria-hidden="true">✦</span>
+              <span class="ddm-copy"><strong>使用SSW+1</strong><small>精華直接升級一階</small></span>
+              <span class="ddm-count" id="ssw-count">× 1 / 1</span>
+              <span class="ddm-shine" aria-hidden="true"></span>
+            </button>
+            <p class="ddm-hint" id="ssw-hint">選取一顆精華提升一級</p>
+          </aside>
+        </section>
       </aside>
 
       <div class="mode-banner" id="mode-banner" role="status" aria-live="polite" hidden>
         <span class="mode-cross">✦</span><span id="skill-mode-message">選取一顆 DDM 精華使用技能</span><button id="cancel-skill" type="button" aria-label="取消技能選取">×</button>
       </div>
-
-      <aside class="ddm-panel" aria-label="直接使用DDM">
-        <button class="ddm-button skill-button" id="ddm-button" type="button" aria-pressed="false">
-          <span class="ddm-icon" aria-hidden="true">
-            <svg viewBox="0 0 52 64" role="img"><path d="M19 4h14v9l8 8v32a6 6 0 0 1-6 6H17a6 6 0 0 1-6-6V21l8-8z"/><path d="M19 13h14M11 27h30"/><path class="bottle-cross" d="M26 33v13M19.5 39.5h13"/><path class="bottle-drop" d="M16 51c3-4 7-4 10 0"/></svg>
-          </span>
-          <span class="ddm-copy"><strong>直接使用DDM</strong><small>標準傷害 × 25%</small></span>
-          <span class="ddm-count" id="ddm-count">× 1 / 4</span>
-          <span class="ddm-shine" aria-hidden="true"></span>
-        </button>
-        <p class="ddm-hint" id="ddm-hint">選取精華，轉化為攻擊能量</p>
-      </aside>
-
-      <aside class="ssw-panel" aria-label="使用SSW+1">
-        <button class="ssw-button skill-button" id="ssw-button" type="button" aria-pressed="false">
-          <span class="ssw-icon" aria-hidden="true">✦</span>
-          <span class="ddm-copy"><strong>使用SSW+1</strong><small>精華直接升級一階</small></span>
-          <span class="ddm-count" id="ssw-count">× 1 / 1</span>
-          <span class="ddm-shine" aria-hidden="true"></span>
-        </button>
-        <p class="ddm-hint" id="ssw-hint">選取一顆精華提升一級</p>
-      </aside>
 
       <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
       <div class="combo-pop" id="combo-pop" aria-live="polite" hidden></div>
@@ -222,6 +229,7 @@
           <div class="over-stats"><div><span>本局最高等級</span><strong id="final-highest">LV 1</strong></div></div>
           <div class="end-actions">
             <button class="continue-game" id="continue-button" type="button" hidden>繼續遊戲</button>
+            <button class="continue-game" id="start-white-mode-button" type="button" hidden>開始 WHITE MODE</button>
             <button class="play-again" id="restart-button" type="button"><span>↻</span> 重開一局</button>
           </div>
         </div>
