@@ -1,6 +1,8 @@
 (function (global) {
   'use strict';
 
+  const MOBILE_NEXT_PREVIEW_SCALE = 0.70;
+
   function calculateNextPreviewRadius(level, width, height, levels, uiScale = 1) {
     const levelConfig = levels[level];
     if (!levelConfig || !(levelConfig.diameter > 0) || !(width > 0) || !(height > 0) || !(uiScale > 0)) return 0;
@@ -10,7 +12,7 @@
   }
 
   function createRenderer(options) {
-    const { canvas, ctx, nextPreviewCanvas, nextPreviewCtx, config, getState, clamp } = options;
+    const { canvas, ctx, nextPreviewCanvas, nextPreviewCtx, config, getState, clamp, text } = options;
     const MAX_LEVEL = config.LAYOUT.ballDiameterRatios.length - 1;
     const { DDM_FADE_DURATION, MAX_PRESENTATION_DURATION, MERGE_DELAY } = config;
     let layout = options.layout || config;
@@ -52,7 +54,8 @@
       const height = nextPreviewCanvas.clientHeight;
       if (!width || !height) return;
       nextPreviewCtx.clearRect(0, 0, width, height);
-      const radius = calculateNextPreviewRadius(nextLevel, width, height, MELANIN_LEVELS, uiScale);
+      const previewScale = layout.mode === 'mobile' ? MOBILE_NEXT_PREVIEW_SCALE : 1;
+      const radius = calculateNextPreviewRadius(nextLevel, width, height, MELANIN_LEVELS, uiScale * previewScale);
       drawMelanin(width / 2, height / 2, nextLevel, radius, 1, 1, false, 0, nextPreviewCtx);
     }
 
@@ -163,7 +166,7 @@
       ctx.font = '700 ' + layout.DANGER_LABEL_FONT_SIZE + 'px "DM Sans", "Noto Sans TC", sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      const label = '危險線';
+      const label = text.get('canvas.dangerLine');
       const textWidth = ctx.measureText(label).width;
       roundedRect(ctx, layout.GAME_LEFT + 23, DANGER_LINE_Y - 16, textWidth + 20, 31, 15);
       ctx.fillStyle = warningFlash ? 'rgba(255,235,232,.98)' : 'rgba(255,255,255,.94)';
@@ -229,7 +232,7 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillStyle = 'rgba(91, 70, 79, .9)';
-      ctx.fillText('MAX', x, y - radius - 17);
+      ctx.fillText(text.get('canvas.max'), x, y - radius - 17);
       ctx.restore();
     }
 
@@ -392,7 +395,7 @@
     function drawLevelBadge(x, y, r, level, config, renderContext = ctx) {
       const ctx = renderContext;
       if (config.labelFont <= 0) return;
-      const text = `LV${level}`;
+      const badgeLabel = text.get('canvas.level', { level });
       const labelScale = Math.min(1, r / (config.diameter / 2));
       const fontSize = Math.max(9, config.labelFont * labelScale);
       ctx.save();
@@ -400,13 +403,13 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const height = Math.min(r * .72, Math.max(9, fontSize * 1.2));
-      const width = ctx.measureText(text).width + Math.max(6, fontSize * .72);
+      const width = ctx.measureText(badgeLabel).width + Math.max(6, fontSize * .72);
       const badgeTop = y + r * .35;
       roundedRect(ctx, x - width / 2, badgeTop, width, height, height / 2);
       ctx.fillStyle = config.badgeFill;
       ctx.fill();
       ctx.fillStyle = config.labelColor;
-      ctx.fillText(text, x, badgeTop + height / 2 + .3);
+      ctx.fillText(badgeLabel, x, badgeTop + height / 2 + .3);
       ctx.restore();
     }
 

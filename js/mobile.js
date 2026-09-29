@@ -8,6 +8,9 @@
   let landscape = false;
   let lastWidth = global.innerWidth;
   let lastHeight = global.innerHeight;
+  let bossHealthPlaceholder = null;
+  let bossHealthPlaceholderBaseHeight = 0;
+  let bossHealthPlaceholderBaseWidth = 0;
 
   function hasTouchInput() {
     return Boolean(coarsePointer?.matches || (global.navigator?.maxTouchPoints || 0) > 0);
@@ -30,6 +33,46 @@
     if (orientationNotice) orientationNotice.hidden = !landscape;
   }
 
+  function syncBossHealthCardLayout(nextMode = mode) {
+    const bossTarget = document.querySelector('#boss-target');
+    const rightPanel = document.querySelector('.right-panel');
+    const healthCard = document.querySelector('#boss-health-card');
+    if (!bossTarget || !rightPanel || !healthCard) return;
+
+    if (nextMode === 'mobile') {
+      if (healthCard.parentElement === bossTarget) {
+        const frame = document.querySelector('.game-wrapper');
+        const cardRect = healthCard.getBoundingClientRect();
+        const placeholder = document.createElement('div');
+        placeholder.className = 'boss-health-mobile-placeholder';
+        placeholder.setAttribute('aria-hidden', 'true');
+        bossTarget.insertBefore(placeholder, healthCard);
+        bossHealthPlaceholder = placeholder;
+        bossHealthPlaceholderBaseHeight = cardRect.height;
+        bossHealthPlaceholderBaseWidth = frame?.getBoundingClientRect().width || cardRect.width;
+        const maxRule = rightPanel.querySelector('.max-rule-card');
+        rightPanel.insertBefore(healthCard, maxRule || null);
+      }
+
+      if (bossHealthPlaceholder && bossHealthPlaceholderBaseWidth > 0) {
+        const frameWidth = document.querySelector('.game-wrapper')?.getBoundingClientRect().width;
+        if (frameWidth) {
+          bossHealthPlaceholder.style.height = `${bossHealthPlaceholderBaseHeight * frameWidth / bossHealthPlaceholderBaseWidth}px`;
+        }
+      }
+      return;
+    }
+
+    if (healthCard.parentElement === rightPanel) {
+      const visual = bossTarget.querySelector('.boss-visual');
+      bossTarget.insertBefore(healthCard, bossHealthPlaceholder || visual || null);
+    }
+    bossHealthPlaceholder?.remove();
+    bossHealthPlaceholder = null;
+    bossHealthPlaceholderBaseHeight = 0;
+    bossHealthPlaceholderBaseWidth = 0;
+  }
+
   function refresh() {
     const previousMode = mode;
     const previousLandscape = landscape;
@@ -38,6 +81,7 @@
     mode = detectMode();
     landscape = mode === 'mobile' && global.innerWidth > global.innerHeight;
     applyClasses();
+    syncBossHealthCardLayout(mode);
 
     if (mode !== previousMode) {
       global.dispatchEvent(new CustomEvent('ddm-ui-mode-change', {
@@ -56,6 +100,7 @@
   applyClasses();
   document.addEventListener('DOMContentLoaded', () => {
     applyClasses();
+    syncBossHealthCardLayout(mode);
     const gameFrame = document.querySelector('.game-wrapper');
     if (gameFrame && 'ResizeObserver' in global) new ResizeObserver(refresh).observe(gameFrame);
   }, { once: true });

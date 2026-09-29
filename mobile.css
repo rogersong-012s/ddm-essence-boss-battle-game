@@ -15,15 +15,24 @@ html.mobile-ui body {
 }
 
 html.mobile-ui .page-shell {
-  --mobile-safe-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  --mobile-content-shift: clamp(6px, 2.1vw, 9px);
+  --mobile-safe-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - var(--mobile-content-shift));
   width: 100vw;
   height: 100dvh;
-  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  padding: calc(env(safe-area-inset-top, 0px) + var(--mobile-content-shift)) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
   box-sizing: border-box;
   overscroll-behavior: contain;
 }
 
 html.mobile-ui .game-wrapper {
+  --player-character-frame-width: 19cqw;
+  --mobile-character-frame-height: 19cqw;
+  --player-character-frame-height: var(--mobile-character-frame-height);
+  --boss-character-frame-width: 100%;
+  --boss-character-frame-height: var(--mobile-character-frame-height);
+  --mobile-header-top: 1.35%;
+  --mobile-header-height: 5.15%;
+  --mobile-theme-height: clamp(31px, 8.2cqw, 36px);
   width: min(100%, calc(var(--mobile-safe-height) * 430 / 932));
   height: min(var(--mobile-safe-height), calc((100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) * 932 / 430));
   max-height: none;
@@ -42,8 +51,8 @@ html.mobile-ui #game-canvas {
 html.mobile-ui .game-header {
   left: 4%;
   right: 4%;
-  top: 1.35%;
-  height: 5.15%;
+  top: var(--mobile-header-top);
+  height: var(--mobile-header-height);
   gap: 1%;
 }
 
@@ -68,19 +77,21 @@ html.mobile-ui .header-note { display: none; }
 
 html.mobile-ui .restart-quiet {
   flex: 0 0 auto;
-  width: clamp(32px, 9cqw, 38px);
-  height: clamp(32px, 9cqw, 38px);
+  align-self: center;
+  width: clamp(30px, 8.4cqw, 42px);
+  height: clamp(30px, 8.4cqw, 42px);
   margin-left: auto;
+  margin-top: 0;
   font-size: clamp(19px, 5.4cqw, 23px);
 }
 
 html.mobile-ui .theme-switcher {
   z-index: 5;
-  top: 1.45%;
-  right: 14.5%;
+  top: calc(var(--mobile-header-top) + (var(--mobile-header-height) - var(--mobile-theme-height)) / 2);
+  right: 16%;
   bottom: auto;
   width: clamp(65px, 19cqw, 82px);
-  height: clamp(31px, 8.2cqw, 36px);
+  height: var(--mobile-theme-height);
   min-height: 0;
   gap: 0;
   padding: 3px 5px;
@@ -90,9 +101,14 @@ html.mobile-ui .theme-switcher {
 
 html.mobile-ui .theme-switcher-label { display: none; }
 html.mobile-ui .theme-options { gap: clamp(4px, 1.2cqw, 6px); }
-html.mobile-ui .theme-dot { width: clamp(22px, 6.5cqw, 28px); height: clamp(22px, 6.5cqw, 28px); padding: 2px; }
+html.mobile-ui .theme-dot { width: clamp(24px, 6.7cqw, 28px); height: clamp(24px, 6.7cqw, 28px); padding: 2px; }
 
 html.mobile-ui .right-panel {
+  --mobile-info-row-top: 19.7%;
+  --mobile-info-row-gap: clamp(8px, 3.5cqw, 14px);
+  --mobile-info-row-height: calc(31.65% - var(--mobile-info-row-top) - var(--mobile-info-row-gap));
+  --mobile-info-stack-gap: clamp(4px, 1.25cqw, 6px);
+  --mobile-info-stack-card-height: calc((var(--mobile-info-row-height) - var(--mobile-info-stack-gap)) / 2);
   inset: 0;
   z-index: 3;
   display: block;
@@ -109,10 +125,10 @@ html.mobile-ui .right-panel {
 
 html.mobile-ui .right-panel-next {
   position: absolute;
-  top: 16.5%;
+  top: var(--mobile-info-row-top);
   left: 4%;
   width: 44%;
-  height: 14.7%;
+  height: var(--mobile-info-row-height);
   min-height: 0;
   pointer-events: none;
 }
@@ -122,7 +138,7 @@ html.mobile-ui .right-panel .next-panel {
   height: 100%;
   min-height: 0;
   gap: 0;
-  padding: 3px 7px 4px;
+  padding: 2px 7px 3px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(135,99,85,.1), inset 0 1px rgba(255,255,255,.9);
 }
@@ -131,39 +147,60 @@ html.mobile-ui .right-panel .next-panel .panel-kicker {
   align-self: stretch;
   justify-content: space-between;
   flex: 0 0 auto;
-  font-size: clamp(9px, 2.6cqw, 11px);
+  font-size: clamp(8px, 2.4cqw, 10px);
   line-height: 1.15;
   letter-spacing: .11em;
 }
 
-html.mobile-ui .right-panel .next-label { font-size: clamp(8px, 2.35cqw, 10px); }
+html.mobile-ui .right-panel .next-label { font-size: clamp(8px, 2.2cqw, 9px); }
 html.mobile-ui .right-panel .next-preview-wrap { flex: 1 1 auto; min-height: 0; margin: 0 auto; }
-html.mobile-ui .right-panel .next-preview-canvas { width: min(23cqw, 100px); height: auto; max-height: 100%; }
-html.mobile-ui .right-panel .next-level { flex: 0 0 auto; font-size: clamp(9px, 2.6cqw, 11px); line-height: 1.1; }
+html.mobile-ui .right-panel .next-preview-canvas { width: min(17cqw, 76px); height: auto; max-height: 100%; }
+html.mobile-ui .right-panel .next-level { flex: 0 0 auto; font-size: clamp(8px, 2.35cqw, 10px); line-height: 1.05; }
+
+html.mobile-ui .boss-health-mobile-placeholder { flex: 0 0 auto; width: 100%; pointer-events: none; }
+
+html.mobile-ui .right-panel > .boss-health {
+  position: absolute;
+  top: var(--mobile-info-row-top);
+  right: 4%;
+  width: 44%;
+  height: var(--mobile-info-stack-card-height);
+  min-height: 0;
+  padding: 3px clamp(5px, 1.5cqw, 7px);
+  border-radius: 9px;
+  box-shadow: 0 4px 12px rgba(41,99,103,.12), inset 0 1px rgba(255,255,255,.95);
+  pointer-events: none;
+}
+
+html.mobile-ui .right-panel > .boss-health .boss-health-heading { gap: 4px; margin: 0 0 2px; font-size: clamp(8px, 2.15cqw, 9px); }
+html.mobile-ui .right-panel > .boss-health .boss-health-heading strong { font-size: clamp(9px, 2.45cqw, 10px); }
+html.mobile-ui .right-panel > .boss-health.is-white-score .boss-health-heading { gap: 0; }
+html.mobile-ui .right-panel > .boss-health.is-white-score .boss-health-heading strong { font-size: clamp(9px, 2.35cqw, 10px); }
+html.mobile-ui .right-panel > .boss-health .boss-hp-track { height: 5px; min-height: 4px; }
 
 html.mobile-ui .right-panel .max-rule-card {
   position: absolute;
-  top: 16.5%;
+  top: calc(var(--mobile-info-row-top) + var(--mobile-info-stack-card-height) + var(--mobile-info-stack-gap));
   right: 4%;
   left: auto;
   width: 44%;
-  height: 14.7%;
+  height: var(--mobile-info-stack-card-height);
   min-height: 0;
-  gap: clamp(5px, 1.4cqw, 8px);
-  padding: 7px clamp(7px, 2cqw, 10px);
-  border-radius: 12px;
+  gap: 4px;
+  padding: 3px clamp(5px, 1.4cqw, 7px);
+  border-radius: 10px;
   box-shadow: 0 4px 12px rgba(135,99,85,.1), inset 0 1px rgba(255,255,255,.9);
   pointer-events: none;
 }
 
-html.mobile-ui .right-panel .max-rule-icon { flex: 0 0 18px; width: 18px; height: 18px; font-size: 12px; }
-html.mobile-ui .right-panel .max-rule-copy { gap: 3px; }
-html.mobile-ui .right-panel .max-rule-copy strong { font-size: clamp(10px, 2.75cqw, 12px); line-height: 1.25; white-space: normal; }
-html.mobile-ui .right-panel .max-rule-copy p { font-size: clamp(9px, 2.3cqw, 10px); line-height: 1.3; }
+html.mobile-ui .right-panel .max-rule-icon { flex: 0 0 13px; width: 13px; height: 13px; font-size: 9px; }
+html.mobile-ui .right-panel .max-rule-copy { gap: 1px; }
+html.mobile-ui .right-panel .max-rule-copy strong { font-size: clamp(8px, 2.35cqw, 9.5px); line-height: 1.12; white-space: normal; }
+html.mobile-ui .right-panel .max-rule-copy p { font-size: clamp(7px, 2.05cqw, 8.5px); line-height: 1.14; }
 
 html.mobile-ui .boss-target {
-  left: 26%;
-  top: 7%;
+  left: 75%;
+  top: calc(6.3% - (var(--boss-character-frame-height) - 13.5cqw) - .4cqw);
   bottom: auto;
   width: 44%;
   gap: 1px;
@@ -174,35 +211,45 @@ html.mobile-ui .boss-health {
   width: 100%;
   min-height: 0;
   gap: 3px;
-  padding: 4px 7px 5px;
+  padding: 5px 7px 6px;
   border-radius: 8px;
   box-shadow: 0 3px 8px rgba(41,99,103,.12), inset 0 1px rgba(255,255,255,.95);
 }
 
-html.mobile-ui .boss-health-heading { gap: 4px; margin: 0; font-size: clamp(8px, 2.2cqw, 10px); letter-spacing: .03em; }
-html.mobile-ui .boss-health-heading strong { font-size: clamp(9px, 2.45cqw, 11px); }
+html.mobile-ui .boss-health-heading { gap: 4px; margin: 0; font-size: clamp(9px, 2.25cqw, 10px); letter-spacing: .03em; }
+html.mobile-ui .boss-health-heading strong { font-size: clamp(10px, 2.6cqw, 12px); }
 html.mobile-ui .boss-health.is-white-score .boss-health-heading { gap: 1px; }
-html.mobile-ui .boss-health.is-white-score .boss-health-heading strong { font-size: clamp(9px, 2.45cqw, 11px); }
+html.mobile-ui .boss-health.is-white-score .boss-health-heading strong { font-size: clamp(10px, 2.6cqw, 12px); }
 html.mobile-ui .boss-hp-track { height: 5px; min-height: 4px; }
-html.mobile-ui .boss-visual { height: 7.7cqw; }
-html.mobile-ui .boss-core { width: 7.7cqw; height: 7.7cqw; }
+html.mobile-ui .boss-visual { height: var(--boss-character-frame-height); }
+html.mobile-ui .boss-character-frame { display: flex; align-items: center; justify-content: center; }
+html.mobile-ui .boss-character-frame .boss-character-image {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+}
 html.mobile-ui .boss-caption { gap: 1px; margin-top: -1px; }
 html.mobile-ui .boss-caption span,
-html.mobile-ui .player-caption span { font-size: 7px; }
+html.mobile-ui .player-caption span { font-size: clamp(8px, 2.1cqw, 9px); }
 html.mobile-ui .boss-caption strong,
-html.mobile-ui .player-caption strong { font-size: clamp(9px, 2.5cqw, 11px); }
+html.mobile-ui .player-caption strong { font-size: clamp(10px, 2.7cqw, 12px); }
 
 html.mobile-ui .player-hero {
-  left: 76%;
-  top: 7%;
+  left: 25%;
+  top: 7.75%;
   bottom: auto;
-  width: 23%;
+  width: 40%;
   gap: 0;
   transform: translateX(-50%);
 }
 
-html.mobile-ui .player-hero-art { width: 15cqw; height: 15cqw; }
-html.mobile-ui .player-caption { gap: 1px; line-height: 1.05; }
+html.mobile-ui .boss-caption,
+html.mobile-ui .player-caption { gap: 1px; line-height: 1.15; }
+html.mobile-ui .boss-caption strong,
+html.mobile-ui .player-caption strong { display: block; min-height: 1.15em; line-height: 1.15; white-space: nowrap; }
 
 html.mobile-ui .right-skills {
   position: absolute;
@@ -326,5 +373,6 @@ html.mobile-landscape .page-shell { visibility: hidden; }
 html.mobile-landscape .orientation-warning { visibility: visible; }
 
 @media (prefers-reduced-motion: reduce) {
-  html.mobile-ui .boss-target.is-hit .boss-core { animation-duration: .01ms; }
+  html.mobile-ui .boss-target.is-hit .boss-core,
+  html.mobile-ui .boss-target.is-hit .boss-character-image { animation-duration: .01ms; }
 }

@@ -1,6 +1,6 @@
 # DDM Essence Merge — Melanin Boss Battle
 
-以西瓜合成為基礎的 16:9 瀏覽器遊戲。球體代表 DDM 精華；玩家合成精華後，由左側的 DDM 守衛向黑色素 Boss 發射流星攻擊。遊戲使用原生 HTML、CSS、JavaScript 與 Matter.js，沒有建置或安裝步驟。Matter.js 0.20.0 和 Google Fonts 透過 CDN 載入，首次遊玩需要網路連線。
+以西瓜合成為基礎的瀏覽器遊戲，支援 16:9 桌面版與手機直向版面。球體代表 DDM 精華；玩家合成精華後，由左側的 DDM 守衛向黑色素 Boss 發射流星攻擊。遊戲使用原生 HTML、CSS、JavaScript 與 Matter.js，沒有建置或安裝步驟。Matter.js 0.20.0 和 Google Fonts 透過 CDN 載入，首次遊玩需要網路連線。
 
 ## 開始遊戲
 
@@ -21,6 +21,10 @@ python -m http.server 8000 --bind 127.0.0.1
 - 右側「使用SSW+1」可選取非 MAX 精華，直接升級一階；此技能不造成傷害或增加 WHITE SCORE，並保留球的所在位置與運動狀態。
 - DDM 或 SSW+1 進入選取模式後，點技能按鈕或提示列的 × 可取消。技能選取期間不能放球。
 - 精華越過危險線並持續 3.6 秒會觸發 Game Over。
+
+## 響應式介面
+
+桌面版以 1600 × 900、16:9 為設計基準；手機使用獨立的直向版面。`js/mobile.js` 依視窗與輸入裝置判斷目前 UI 模式，`mobile.css` 提供手機版配置；桌面版樣式仍由 `styles.css` 管理。版面切換不會重置遊戲或改變遊戲規則。
 
 ## Boss 戰與 WHITE SCORE
 
@@ -64,7 +68,7 @@ Boss 會依序登場，擊敗一隻後遊戲短暫暫停，再由下一隻接戰
 
 ## 主要設定
 
-常用玩法與版面數值集中在 `js/config.js`：
+常用玩法與版面數值集中在 `js/config.js`。Debug mode 預設關閉，正式遊玩不會啟用內部測試快捷鍵：
 
 | 設定 | 數值 |
 | --- | ---: |
@@ -83,12 +87,17 @@ Boss 會依序登場，擊敗一隻後遊戲短暫暫停，再由下一隻接戰
 
 ## 專案結構
 
-所有 JavaScript 以一般 `<script defer>` 載入，不使用 ES Modules，遊戲可直接從 `file://` 開啟。
+遊戲不使用 ES Modules；`js/mobile.js` 在頁面 head 載入以便及早套用介面模式，其餘 JavaScript 以一般 `<script defer>` 載入。遊戲可直接從 `file://` 開啟。
 
 - `index.html`：遊戲介面、Canvas 與 Boss／玩家角色視覺。
-- `styles.css`：16:9 版面、動畫與 responsive UI。
+- `styles.css`：桌面 16:9 版面、動畫與共用樣式。
+- `mobile.css`：手機版專用版面與 responsive 規則。
+- `js/mobile.js`：手機／桌面 UI 模式與直向提醒。
 - `game.js`：Matter.js 世界、輸入、掉球、合成、技能、結算與系統協調。
 - `js/config.js`：共用玩法、物理、Boss 與版面設定。
+- `js/ui-text.js`：介面文案與替換文字。
+- `js/characters.js`：玩家與 Boss 圖片載入及備援視覺。
+- `assets/characters/`：玩家與五隻 Boss 角色圖片。
 - `js/themes.js`：精華等級、主題與色票資料。
 - `js/skills.js`：MAX 合成技能獎勵抽選。
 - `js/combat.js`：五隻 Boss、生命值、WHITE SCORE 與戰鬥數值管線。
@@ -96,6 +105,7 @@ Boss 會依序登場，擊敗一隻後遊戲短暫暫停，再由下一隻接戰
 - `js/renderer.js`：Canvas 球體、容器、粒子與 NEXT 預覽。
 - `js/progression.js`：DDM 守衛等級與球體縮放倍率。
 - `js/ball-sizes.js`：Matter.js 球體尺寸更新。
+- `js/danger-zone.js`：危險線計時與遊戲結束判定。
 
 攻擊發射點與 Boss 中心依實際 DOM 邊界計算，再轉換到 1600 × 900 遊戲座標。流星沿弧線前進，包含發光核心、拖尾與命中特效；動畫結束後會清理，不會持續累積。Boss 與玩家角色位於容器外，並不參與 Matter.js 碰撞。
 
@@ -107,11 +117,11 @@ Boss 會依序登場，擊敗一隻後遊戲短暫暫停，再由下一隻接戰
 
 ## 內部測試快捷鍵
 
-`js/config.js` 的 `DEBUG` 預設為 `true`：
+`js/config.js` 的 `DEBUG` 預設為 `false`。只有暫時將它設為 `true` 時，以下內部測試快捷鍵才會啟用：
 
 - `1`–`8`：在容器中生成指定等級精華。
 - `D`：嘗試各補充一次 DDM 與 SSW+1，不會超過技能持有上限。
 - `G`：直接觸發 Game Over 結算。
 - `R`：重新開始。
 
-快捷鍵不會顯示在遊戲畫面。發布正式版本前，可將 `DEBUG` 設為 `false`。
+快捷鍵不會顯示在遊戲畫面；正式遊玩時請維持 `DEBUG: false`。

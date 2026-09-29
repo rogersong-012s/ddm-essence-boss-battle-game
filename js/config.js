@@ -91,14 +91,15 @@
   });
   const PLAYER_MAX_LEVEL = 10;
   const BALL_SIZE_REDUCTION_PER_PLAYER_LEVEL = 0.02;
+  const PLAYER_CONFIG = Object.freeze({ image: 'assets/characters/player/JF.png' });
   const WHITE_SCORE_DROP_LEVELS = Object.freeze([1, 2, 3, 4, 5]);
   const BOSS_CONFIG = Object.freeze({
     bosses: Object.freeze([
-      Object.freeze({ name: 'A', maxHp: 3000 }),
-      Object.freeze({ name: 'B', maxHp: 5000 }),
-      Object.freeze({ name: 'C', maxHp: 8000 }),
-      Object.freeze({ name: 'D', maxHp: 15000 }),
-      Object.freeze({ name: 'E', maxHp: 25000 })
+      Object.freeze({ name: 'A', displayName: '乾燥妖精', image: 'assets/characters/bosses/boss1.png', maxHp: 3000 }),
+      Object.freeze({ name: 'B', displayName: '角質魔女', image: 'assets/characters/bosses/boss2.png', maxHp: 5000 }),
+      Object.freeze({ name: 'C', displayName: '糖化甜姬', image: 'assets/characters/bosses/boss3.png', maxHp: 8000 }),
+      Object.freeze({ name: 'D', displayName: '氧化女王', image: 'assets/characters/bosses/boss4.png', maxHp: 15000 }),
+      Object.freeze({ name: 'E', displayName: '光老女帝', image: 'assets/characters/bosses/boss5.png', maxHp: 25000 })
     ]),
     transitionDuration: 1800,
     projectileTravelDuration: 460,
@@ -107,7 +108,7 @@
   });
 
   global.DDMGameConfig = Object.freeze({
-    DEBUG: true,
+    DEBUG: false,
     REFERENCE_WIDTH,
     REFERENCE_HEIGHT,
     DANGER_ZONE_DIAMETER_MULTIPLIER,
@@ -124,6 +125,7 @@
     SKILL_CONFIG,
     PLAYER_MAX_LEVEL,
     BALL_SIZE_REDUCTION_PER_PLAYER_LEVEL,
+    PLAYER_CONFIG,
     WHITE_SCORE_DROP_LEVELS,
     DROP_DAMAGE: 10,
     DANGER_DURATION_MS: 3600,

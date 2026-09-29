@@ -5,6 +5,8 @@
   // Tunable game configuration
   // ---------------------------
   // Gameplay constants, theme assets, and mutable run state have one owner each.
+  const UI_TEXT = window.DDMGameText;
+  const text = (key, values) => UI_TEXT.get(key, values);
   const GAME_CONFIG = window.DDMGameConfig;
   const {
     DEBUG, DANGER_ZONE_DIAMETER_MULTIPLIER, SKILL_CONFIG, DROP_DAMAGE,
@@ -63,10 +65,14 @@
   const playerNameEl = document.querySelector('#player-name');
   const bossHealthCardEl = document.querySelector('#boss-health-card');
   const bossHpLabelEl = document.querySelector('#boss-hp-label');
-  const bossCoreEl = document.querySelector('#boss-core');
+  const bossCharacterFrameEl = document.querySelector('#boss-character-frame');
+  const bossCharacterImageEl = document.querySelector('#boss-character-image');
+  const bossCharacterFallbackEl = bossCharacterFrameEl.querySelector('.character-fallback');
   const playerHeroEl = document.querySelector('.player-hero');
   const playerCaptionEl = document.querySelector('.player-caption');
-  const playerAttackOriginEl = document.querySelector('#player-attack-origin');
+  const playerCharacterFrameEl = document.querySelector('#player-character-frame');
+  const playerCharacterImageEl = document.querySelector('#player-character-image');
+  const playerCharacterFallbackEl = playerCharacterFrameEl.querySelector('.character-fallback');
   const bossHpTrackEl = document.querySelector('#boss-hp-track');
   const bossHpFillEl = document.querySelector('#boss-hp-fill');
   const bossHpValueEl = document.querySelector('#boss-hp-value');
@@ -75,7 +81,15 @@
   const themeOptionsEl = document.querySelector('#theme-options');
   const themeSwitcherEl = document.querySelector('#theme-switcher');
   const themeSelectors = new Map();
-  const playerProgression = window.DDMGameProgression.createPlayerProgression(GAME_CONFIG, playerNameEl);
+  const characterVisuals = window.DDMGameCharacters.createCharacterVisuals({
+    playerImageEl: playerCharacterImageEl,
+    playerFallbackEl: playerCharacterFallbackEl,
+    bossImageEl: bossCharacterImageEl,
+    bossFallbackEl: bossCharacterFallbackEl,
+    playerConfig: GAME_CONFIG.PLAYER_CONFIG,
+    text: UI_TEXT
+  });
+  const playerProgression = window.DDMGameProgression.createPlayerProgression(GAME_CONFIG, playerNameEl, UI_TEXT);
 
   let engine;
   let bowlBodies = [];
@@ -120,21 +134,24 @@
   const combat = window.DDMGameCombat.createCombatSystem({
     config: BOSS_CONFIG,
     bossTargetEl, bossHealthCardEl, bossNameEl, bossHpLabelEl, bossHpTrackEl, bossHpFillEl, bossHpValueEl,
+    text: UI_TEXT,
+    setBossVisual: characterVisuals.setBoss,
     isPaused: () => gamePaused,
     schedule,
     formatNumber,
     onBossDefeated: handleBossDefeat
   });
+  combat.updateUI();
   nextLevel = randomDropLevel();
   const attackEffects = window.DDMGameEffects.createAttackEffects({
-    BOSS_CONFIG, attackEffectsEl, bossCoreEl, playerAttackOriginEl,
+    BOSS_CONFIG, attackEffectsEl, bossCharacterFrameEl, playerCharacterFrameEl, text: UI_TEXT,
     getLayoutMetrics, getGameMode: () => combat.mode, getBossHp: () => combat.bossHp,
     isPaused: () => gamePaused, formatNumber, schedule,
     applyCombatValue: (...args) => combat.applyCombatValue(...args), clamp
   });
   const { playPlayerAttackEffect, cancelUnresolvedBossAttacks, clearBossAttackEffects, reflowBossAttackEffects } = attackEffects;
   const renderer = window.DDMGameRenderer.createRenderer({
-    canvas, ctx, nextPreviewCanvas, nextPreviewCtx, config: GAME_CONFIG, layout: runtimeLayout, clamp,
+    canvas, ctx, nextPreviewCanvas, nextPreviewCtx, config: GAME_CONFIG, layout: runtimeLayout, clamp, text: UI_TEXT,
     getState: () => ({
       gameTime, dangerSince, dangerLineWarning, particles, entities, activeSkill, gamePaused,
       currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y,
@@ -143,7 +160,7 @@
   });
 
   if (!window.Matter) {
-    showToast('物理引擎載入失敗，請確認網路連線後重新整理。', 8000);
+    showToast(text('toast.physicsError'), 8000);
     ddmButton.disabled = true;
     sswButton.disabled = true;
     return;
@@ -170,7 +187,6 @@
   Events.on(engine, 'collisionActive', handleCollision);
 
   initializeThemeSelector();
-  combat.updateUI();
   updateSkillUI();
   updateNextUI();
   resizeGame();
@@ -284,8 +300,9 @@
       selector.type = 'button';
       selector.className = 'theme-dot';
       selector.dataset.themeKey = themeKey;
-      selector.setAttribute('aria-label', '切換至' + theme.name);
-      selector.dataset.themeName = theme.name;
+      const themeName = text(theme.nameKey);
+      selector.setAttribute('aria-label', text('theme.select', { theme: themeName }));
+      selector.dataset.themeName = themeName;
       const swatch = document.createElement('span');
       swatch.className = 'theme-dot-swatch';
       swatch.style.setProperty('--theme-swatch', theme.swatch);
@@ -300,7 +317,7 @@
 
   function updateThemeSelector() {
     const activeTheme = BALL_THEMES[currentThemeKey];
-    themeSwitcherEl?.setAttribute('aria-label', '精華色系切換，目前為' + activeTheme.name);
+    themeSwitcherEl?.setAttribute('aria-label', text('theme.current', { theme: text(activeTheme.nameKey) }));
     for (const [themeKey, selector] of themeSelectors) {
       const isActive = themeKey === currentThemeKey;
       selector.setAttribute('aria-pressed', String(isActive));
@@ -331,9 +348,9 @@
 
   function updateNextUI() {
     if (currentLevel == null) spawnNextMelanin();
-    nextEl.textContent = `LV ${nextLevel}`;
+    nextEl.textContent = text('next.level', { level: nextLevel });
     nextPreviewEl.dataset.level = String(nextLevel);
-    nextPreviewEl.setAttribute('aria-label', `下一顆 DDM 精華：Lv ${nextLevel}`);
+    nextPreviewEl.setAttribute('aria-label', text('next.preview', { level: nextLevel }));
   }
 
   function getUIScale(frameWidth = wrapper.clientWidth) {
@@ -641,7 +658,7 @@
     maxBlob.completionCounted = false;
     maxBlob.stateAt = gameTime;
     emitParticles(x, y, '#f6d68e', 25);
-    showToast(source === 'ssw' ? 'SSW+1 強化抵達 MAX！' : 'MAX DDM 精華合成完成！', 1500, true);
+    showToast(text(source === 'ssw' ? 'toast.maxSsw' : 'toast.maxMerge'), 1500, true);
     schedule(() => {
       if (!entities.has(maxBlob.body.id) || maxBlob.completionCounted) return;
       if (!removeEntity(maxBlob)) return;
@@ -652,7 +669,7 @@
           ballSizeManager.resizeAllBalls();
           wakeAllMelaninBodies();
           renderer.draw();
-          showToast('升級：DDM分子效率提升，分子尺寸-2%', 1400, true);
+          showToast(text('toast.playerLevelUp'), 1400, true);
           if (rewardMessage) schedule(() => showToast(rewardMessage, 2100, true), 1400);
         } else if (rewardMessage) {
           showToast(rewardMessage, 2100, true);
@@ -668,16 +685,14 @@
       ddmUses, sswUses, SKILL_CONFIG.ddmMaxUses, SKILL_CONFIG.sswMaxUses, combat.mode
     );
     if (!rewardSkill) {
-      return combat.mode === 'whiteScore'
-        ? 'WHITE MODE MAX 獎勵：DDM 次數已達上限'
-        : 'MAX 合成獎勵：技能次數皆已達上限';
+      return text(combat.mode === 'whiteScore' ? 'toast.maxRewardDdmCapped' : 'toast.maxRewardAllCapped');
     }
 
     addSkillUses(rewardSkill);
     updateSkillUI();
-    const rewardLabel = rewardSkill === 'ddm' ? 'DDM' : 'SSW+1';
-    const rewardPrefix = combat.mode === 'whiteScore' ? 'WHITE MODE MAX 獎勵：' : 'MAX 合成獎勵：';
-    return rewardPrefix + rewardLabel + ' 次數 +1（目前 ×' + getSkillUses(rewardSkill) + '）';
+    const rewardLabel = text(rewardSkill === 'ddm' ? 'toast.ddmUpgrade' : 'toast.sswUpgrade');
+    const rewardPrefix = text(combat.mode === 'whiteScore' ? 'toast.whiteMaxRewardPrefix' : 'toast.maxRewardPrefix');
+    return text('toast.maxReward', { prefix: rewardPrefix, skill: rewardLabel, uses: getSkillUses(rewardSkill) });
   }
 
   function registerCombo() {
@@ -685,7 +700,7 @@
     else comboCount = 1;
     lastMergeTime = gameTime;
     if (comboCount >= 2) {
-      comboEl.textContent = `COMBO ×${comboCount}`;
+      comboEl.textContent = text('combo', { count: comboCount });
       comboEl.hidden = false;
       comboEl.style.animation = 'none';
       void comboEl.offsetWidth;
@@ -719,7 +734,7 @@
       const dy = y - body.position.y;
       if (dx * dx + dy * dy > (radius * 1.12) ** 2) continue;
       if (state !== 'active' && state !== 'special') {
-        showToast('這顆 DDM 精華正在合成，等一下再試！');
+        showToast(text('toast.mergeBusy'));
         return null;
       }
       return entity;
@@ -753,15 +768,13 @@
       return;
     }
     if (getSkillUses(skill) <= 0) {
-      showToast(`${skill === 'ddm' ? '直接使用DDM' : '使用SSW+1'} 次數用完了；MAX 合成可補充技能次數！`);
+      showToast(text('skills.ddmUsesEmpty', { skill: text(skill === 'ddm' ? 'toast.ddmName' : 'toast.sswName') }));
       return;
     }
     activeSkill = skill;
     canvas.classList.toggle('ddm-selecting', skill === 'ddm');
     canvas.classList.toggle('ssw-selecting', skill === 'ssw');
-    modeBannerMessage.textContent = skill === 'ddm'
-      ? '選取一顆非 MAX DDM 精華，轉為攻擊能量（標準傷害的 25%）'
-      : '選取一顆 DDM 精華直接升級一階，不造成傷害';
+    modeBannerMessage.textContent = text(skill === 'ddm' ? 'skills.ddmMode' : 'skills.sswMode');
     modeBanner.hidden = false;
     updateSkillUI();
   }
@@ -781,7 +794,7 @@
   function useDDM(target) {
     if (gamePaused || ddmBusy || activeSkill !== 'ddm' || !entities.has(target.body.id)) return;
     if (target.level >= MAX_LEVEL || target.special) {
-      showToast('最高等級精華無法直接使用DDM，請選取非 MAX 精華');
+      showToast(text('skills.ddmTooHigh'));
       return;
     }
     if (target.state !== 'active' || ddmUses <= 0) return;
@@ -798,10 +811,8 @@
     wakeAllMelaninBodies();
     emitParticles(x, y, '#83d7bf', 12);
     playPlayerAttackEffect(damage, 'ddm');
-    const impactCopy = combat.mode === 'whiteScore'
-      ? `WHITE SCORE +${formatNumber(damage)}`
-      : `−${formatNumber(damage)} HP`;
-    showToast(`DDM 精華轉化為攻擊能量：${impactCopy}`, 1600, true);
+    const impactCopy = text(combat.mode === 'whiteScore' ? 'skills.ddmWhiteResult' : 'skills.ddmHpResult', { damage: formatNumber(damage) });
+    showToast(text('skills.ddmResult', { result: impactCopy }), 1600, true);
     schedule(() => {
       if (entities.has(target.body.id)) removeEntity(target);
       ddmBusy = false;
@@ -812,7 +823,7 @@
   function useSSW(target) {
     if (gamePaused || activeSkill !== 'ssw' || !entities.has(target.body.id)) return;
     if (target.level >= MAX_LEVEL || target.special) {
-      showToast('已是最高等級');
+      showToast(text('skills.sswTooHigh'));
       return;
     }
     if (target.state !== 'active' || sswUses <= 0) return;
@@ -837,16 +848,16 @@
     Body.setAngularVelocity(upgraded.body, angularVelocity);
     upgraded.popFrom = gameTime;
     upgraded.lastUpgradeSource = 'ssw';
-    showToast(`SSW+1 強化完成：Lv ${target.level} → Lv ${nextLevelValue}`, 1600, true);
+    showToast(text('skills.sswCompleted', { from: target.level, to: nextLevelValue }), 1600, true);
   }
 
   function updateSkillUI() {
     const ddmSelected = activeSkill === 'ddm';
     const sswSelected = activeSkill === 'ssw';
-    ddmCountEl.textContent = `× ${ddmUses} / ${SKILL_CONFIG.ddmMaxUses}`;
-    sswCountEl.textContent = `× ${sswUses} / ${SKILL_CONFIG.sswMaxUses}`;
-    ddmButton.setAttribute('aria-label', `直接使用DDM，持有 ${ddmUses} 次，上限 ${SKILL_CONFIG.ddmMaxUses} 次`);
-    sswButton.setAttribute('aria-label', `使用SSW+1，持有 ${sswUses} 次，上限 ${SKILL_CONFIG.sswMaxUses} 次`);
+    ddmCountEl.textContent = text('count', { uses: ddmUses, max: SKILL_CONFIG.ddmMaxUses });
+    sswCountEl.textContent = text('count', { uses: sswUses, max: SKILL_CONFIG.sswMaxUses });
+    ddmButton.setAttribute('aria-label', text('skills.ddmUsesAria', { uses: ddmUses, max: SKILL_CONFIG.ddmMaxUses }));
+    sswButton.setAttribute('aria-label', text('skills.sswUsesAria', { uses: sswUses, max: SKILL_CONFIG.sswMaxUses }));
     ddmButton.disabled = ddmUses <= 0 || ddmBusy || gamePaused;
     sswButton.disabled = sswUses <= 0 || ddmBusy || gamePaused;
     ddmButton.classList.toggle('is-active', ddmSelected);
@@ -856,16 +867,16 @@
     ddmPanel.classList.toggle('is-active', ddmSelected);
     sswPanel.classList.toggle('is-active', sswSelected);
     ddmHint.textContent = ddmSelected
-      ? '點選非 MAX 精華，造成其標準傷害的 25%'
-      : ddmUses <= 0 ? 'MAX 合成可補充技能次數' : '選取精華，轉化為攻擊能量';
+      ? text('skills.ddmSelectedHint')
+      : ddmUses <= 0 ? text('skills.ddmEmptyHint') : text('skills.emptySelection');
     sswHint.textContent = sswSelected
-      ? '點選精華升級一階，不造成傷害'
+      ? text('skills.sswSelectedHint')
       : sswUses <= 0
-        ? combat.mode === 'whiteScore' ? 'WHITE MODE 不會補充 SSW+1' : 'MAX 合成可補充技能次數'
-        : '選取一顆精華提升一級';
+        ? combat.mode === 'whiteScore' ? text('skills.sswWhiteEmptyHint') : text('skills.ddmEmptyHint')
+        : text('skills.emptySswSelection');
     maxRuleDescriptionEl.textContent = combat.mode === 'whiteScore'
-      ? 'MAX 合成只補充 DDM，不再補充 SSW+1。'
-      : '合成後精華會消除，並隨機補充 1 次技能。';
+      ? text('rules.maxWhiteDescription')
+      : text('rules.maxDescription');
   }
 
   function calculateMergeScore(level) {
@@ -931,16 +942,16 @@
   function showEndStateModal(type) {
     const content = {
       defeat: {
-        badge: '↻', eyebrow: '再接再厲', title: '好可惜，再挑戰一次吧！',
-        copy: '這場連續 Boss 挑戰尚未完成，重新整隊後再來一戰。', canContinue: false
+        badge: text('end.defeatBadge'), eyebrow: text('end.defeatEyebrow'), title: text('end.defeatTitle'),
+        copy: text('end.defeatCopy'), canContinue: false
       },
       victory: {
-        badge: '✦', eyebrow: '挑戰完成', title: '勝利！五隻 Boss 全部擊破！',
-        copy: 'DDM 精華能量成功發揮效果。你可以繼續累積 WHITE SCORE，或重開一局。', canContinue: true
+        badge: text('end.victoryBadge'), eyebrow: text('end.victoryEyebrow'), title: text('end.victoryTitle'),
+        copy: text('end.victoryCopy'), canContinue: true
       },
       continued: {
-        badge: '★', eyebrow: '續戰完成', title: '表現很棒！',
-        copy: `你已經擊敗全部五隻 Boss，還在勝利後繼續奮戰，累積 WHITE SCORE ${formatNumber(combat.whiteScore)}。`, canContinue: false
+        badge: text('end.continuedBadge'), eyebrow: text('end.continuedEyebrow'), title: text('end.continuedTitle'),
+        copy: text('end.continuedCopy', { score: formatNumber(combat.whiteScore) }), canContinue: false
       }
     }[type];
     if (!content) return;
@@ -953,7 +964,7 @@
     endStateEyebrowEl.textContent = content.eyebrow;
     gameOverTitleEl.textContent = content.title;
     gameOverCopyEl.textContent = content.copy;
-    finalHighestEl.textContent = `LV ${currentRunHighestLevel}`;
+    finalHighestEl.textContent = text('level', { level: currentRunHighestLevel });
     continueButtonEl.hidden = !content.canContinue;
     gameOverEl.hidden = false;
     (content.canContinue ? continueButtonEl : restartButtonEl).focus({ preventScroll: true });
@@ -989,11 +1000,11 @@
   }
 
   function showBossTransition(defeatedBoss, nextBoss, isFinalBoss) {
-    bossTransitionKickerEl.textContent = isFinalBoss ? 'FINAL BOSS DEFEATED' : 'BOSS DEFEATED';
-    bossTransitionTitleEl.textContent = `BOSS ${defeatedBoss.name} 擊破！`;
+    bossTransitionKickerEl.textContent = text(isFinalBoss ? 'boss.transitionFinalKicker' : 'boss.transitionRegularKicker');
+    bossTransitionTitleEl.textContent = text('boss.transitionDefeated', { name: defeatedBoss.displayName });
     bossTransitionNextEl.textContent = isFinalBoss
-      ? '所有黑色素 Boss 已擊破！'
-      : `NEXT BOSS · BOSS ${nextBoss.name} 即將出現`;
+      ? text('boss.transitionFinalNext')
+      : text('boss.transitionNext', { name: nextBoss.displayName });
     bossTransitionEl.hidden = false;
     bossTransitionEl.classList.remove('is-active');
     void bossTransitionEl.offsetWidth;
@@ -1036,10 +1047,10 @@
   function showWhiteModeRules() {
     if (activeEndState !== 'victory' || !bossDefeated || gameOverEl.hidden) return;
     activeEndState = 'whiteModeIntro';
-    endStateBadgeEl.textContent = '✦';
-    endStateEyebrowEl.textContent = '續戰規則';
-    gameOverTitleEl.textContent = 'WHITE MODE';
-    gameOverCopyEl.textContent = '進入 WHITE MODE 後，Lv9（MAX）的技能獎勵只會補充 DDM，不再補充 SSW+1。挑戰更高 WHITE SCORE！';
+    endStateBadgeEl.textContent = text('end.victoryBadge');
+    endStateEyebrowEl.textContent = text('end.whiteRulesEyebrow');
+    gameOverTitleEl.textContent = text('end.whiteRulesTitle');
+    gameOverCopyEl.textContent = text('end.whiteRulesCopy');
     endStatsEl.hidden = true;
     continueButtonEl.hidden = true;
     restartButtonEl.hidden = true;
@@ -1135,7 +1146,9 @@
       const gainedDdm = addSkillUses('ddm');
       const gainedSsw = addSkillUses('ssw');
       updateSkillUI();
-      showToast(gainedDdm || gainedSsw ? `測試補充技能次數：DDM ×${ddmUses}・SSW+1 ×${sswUses}` : '技能次數已達上限！', 1250, gainedDdm || gainedSsw);
+      showToast(gainedDdm || gainedSsw
+        ? text('toast.debugSkillUses', { ddm: ddmUses, ssw: sswUses })
+        : text('toast.skillMaxReached'), 1250, gainedDdm || gainedSsw);
       return;
     }
     const level = Number(event.key);
@@ -1152,7 +1165,7 @@
     }
     const entity = createMelanin(level, clamp(spawnX, runtimeLayout.GAME_LEFT + radius + 4, runtimeLayout.GAME_RIGHT - radius - 4), Math.round(runtimeLayout.LOGICAL_HEIGHT * runtimeLayout.LAYOUT.debugSpawnY));
     entity.dangerBornAt = gameTime - 1500;
-    showToast(`Lv ${level} DDM 精華`, 900);
+    showToast(text('toast.spawnedLevel', { level }), 900);
   }
 
   function resizeGame() {

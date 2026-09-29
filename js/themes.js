@@ -34,8 +34,8 @@
     ];
 
     const BALL_THEMES = {
-      warm: { name: '暖色系', swatch: 'linear-gradient(135deg, #FCEEE8 0%, #EEAE9B 55%, #CC5C5D 100%)', levels: WARM_LEVELS },
-      rainbow: { name: '繽紛彩色', swatch: 'conic-gradient(#EF89AB 0deg, #F18477 50deg, #F3A15F 95deg, #E7C45D 140deg, #94C56E 185deg, #67BBC5 230deg, #7298D9 275deg, #8D82D1 320deg, #B174C2 360deg)', levels: RAINBOW_LEVELS }
+      warm: { nameKey: 'theme.warm', swatch: 'linear-gradient(135deg, #FCEEE8 0%, #EEAE9B 55%, #CC5C5D 100%)', levels: WARM_LEVELS },
+      rainbow: { nameKey: 'theme.rainbow', swatch: 'conic-gradient(#EF89AB 0deg, #F18477 50deg, #F3A15F 95deg, #E7C45D 140deg, #94C56E 185deg, #67BBC5 230deg, #7298D9 275deg, #8D82D1 320deg, #B174C2 360deg)', levels: RAINBOW_LEVELS }
     };
 
     return { WARM_LEVELS, RAINBOW_COLORS, RAINBOW_LEVELS, BALL_THEMES };

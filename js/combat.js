@@ -11,6 +11,8 @@
       bossHpTrackEl,
       bossHpFillEl,
       bossHpValueEl,
+      text,
+      setBossVisual,
       isPaused,
       schedule,
       formatNumber,
@@ -27,11 +29,12 @@
     function updateUI() {
       const isWhiteScoreMode = mode === 'whiteScore';
       const currentBoss = bosses[currentBossIndex];
-      const bossName = currentBoss ? `BOSS ${currentBoss.name}` : 'BOSS';
+      const bossName = currentBoss?.displayName || text.get('boss.unknown');
+      setBossVisual?.(currentBoss);
       bossNameEl.textContent = bossName;
-      bossTargetEl.setAttribute('aria-label', `${bossName} 敵方目標`);
+      bossTargetEl.setAttribute('aria-label', text.get('boss.targetRole', { name: bossName }));
       bossHealthCardEl.classList.toggle('is-white-score', isWhiteScoreMode);
-      bossHpLabelEl.textContent = isWhiteScoreMode ? 'WHITE SCORE' : 'BOSS HP';
+      bossHpLabelEl.textContent = isWhiteScoreMode ? text.get('boss.whiteScore') : text.get('boss.hp');
       bossHpTrackEl.hidden = isWhiteScoreMode;
       bossHpTrackEl.setAttribute('aria-hidden', String(isWhiteScoreMode));
       bossHpValueEl.textContent = isWhiteScoreMode

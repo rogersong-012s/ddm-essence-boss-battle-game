@@ -1,7 +1,7 @@
 (function (global) {
   'use strict';
 
-  function createPlayerProgression(config, playerNameEl) {
+  function createPlayerProgression(config, playerNameEl, text) {
     let playerLevel = 0;
 
     function getBallScale() {
@@ -13,7 +13,7 @@
 
     function updatePlayerName(animate = false) {
       if (!playerNameEl) return;
-      playerNameEl.textContent = `DDM守衛+${playerLevel}`;
+      playerNameEl.textContent = `${text.get('player.namePrefix')}${playerLevel}`;
       if (!playerNameEl.classList) return;
       playerNameEl.classList.remove('is-leveling-up');
       if (animate) {

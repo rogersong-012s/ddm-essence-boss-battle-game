@@ -4,16 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#8bcfe8">
-  <meta name="description" content="合成 DDM 精華累積能量，由玩家角色討伐黑色素 Boss。">
-  <title>DDM Essence Merge — Melanin Boss Battle</title>
+  <meta name="description" content="合成 DDM 精華累積能量，由玩家角色討伐黑色素 Boss。" data-ui-content="document.description">
+  <title data-ui-text="document.title">DDM Essence Battle — Essence Merge</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23069f87'/%3E%3Ctext x='32' y='46' text-anchor='middle' font-size='42' fill='white'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
   <script src="js/mobile.js"></script>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="mobile.css">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+  <script defer src="js/ui-text.js"></script>
   <script defer src="js/config.js"></script>
   <script defer src="js/themes.js"></script>
   <script defer src="js/skills.js"></script>
+  <script defer src="js/characters.js"></script>
   <script defer src="js/combat.js"></script>
   <script defer src="js/effects.js"></script>
   <script defer src="js/renderer.js"></script>
@@ -24,7 +26,7 @@
 </head>
 <body>
   <main class="page-shell">
-    <section class="game-wrapper" aria-label="DDM 精華合成戰鬥遊戲">
+    <section class="game-wrapper" aria-label="DDM 精華合成戰鬥遊戲" data-ui-aria="game.label">
       <div class="summer-scene" aria-hidden="true">
         <div class="summer-sun"><span></span></div>
         <div class="summer-cloud cloud-one"><i></i></div>
@@ -36,18 +38,18 @@
         <div class="meadow-flower flower-three"><i></i><b></b></div>
         <div class="meadow-flower flower-four"><i></i><b></b></div>
       </div>
-      <canvas id="game-canvas" aria-label="DDM 精華合成戰場，移動游標選擇位置，點擊放下 DDM 精華"></canvas>
+      <canvas id="game-canvas" aria-label="DDM 精華合成戰場，移動游標選擇位置，點擊放下 DDM 精華" data-ui-aria="game.canvasLabel"></canvas>
 
       <header class="game-header">
         <div class="brand-lockup">
           <div class="brand-mark" aria-hidden="true"><span>✦</span><i></i></div>
           <div>
-            <p class="eyebrow">DDM ESSENCE BATTLE</p>
-            <h1>ESSENCE <span>MERGE</span></h1>
+            <p class="eyebrow" data-ui-text="game.headerKicker">DDM ESSENCE BATTLE</p>
+            <h1><span class="brand-title-word" data-ui-text="game.titleEssence">ESSENCE</span> <span data-ui-text="game.titleMerge">MERGE</span></h1>
           </div>
         </div>
-        <div class="header-note"><span class="pulse-dot"></span> 合成・蓄能・討伐</div>
-        <button class="restart-quiet" id="restart-top" type="button" title="重新開始" aria-label="重新開始">↻</button>
+        <div class="header-note"><span class="pulse-dot"></span><span data-ui-text="game.headerNote">合成・蓄能・討伐</span></div>
+        <button class="restart-quiet" id="restart-top" type="button" title="重新開始" aria-label="重新開始" data-ui-title="game.restart" data-ui-aria="game.restart">↻</button>
       </header>
 
       <svg class="attack-effects" id="attack-effects" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true">
@@ -68,21 +70,24 @@
       <section class="boss-transition" id="boss-transition" role="status" aria-live="assertive" hidden>
         <div class="boss-transition-card">
           <span class="boss-transition-spark" aria-hidden="true">✦</span>
-          <p class="boss-transition-kicker" id="boss-transition-kicker">BOSS DEFEATED</p>
-          <h2 id="boss-transition-title">BOSS A 擊破！</h2>
-          <p id="boss-transition-next">NEXT BOSS · BOSS B 即將出現</p>
+          <p class="boss-transition-kicker" id="boss-transition-kicker" data-ui-text="boss.transitionRegularKicker">BOSS DEFEATED</p>
+          <h2 id="boss-transition-title" data-ui-text="boss.transitionTitleFallback">BOSS 擊破！</h2>
+          <p id="boss-transition-next" data-ui-text="boss.transitionNextFallback">下一隻 BOSS 即將出現</p>
         </div>
       </section>
 
-      <aside class="boss-target" id="boss-target" aria-label="黑色素 Boss 敵方目標">
+      <aside class="boss-target" id="boss-target" aria-label="黑色素 Boss 敵方目標" data-ui-aria="boss.targetRoleDefault">
         <div class="boss-health" id="boss-health-card">
-          <div class="boss-health-heading"><span id="boss-hp-label">BOSS HP</span><strong id="boss-hp-value">-- / --</strong></div>
-          <div class="boss-hp-track" id="boss-hp-track" role="progressbar" aria-label="Boss 生命值" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+          <div class="boss-health-heading"><span id="boss-hp-label" data-ui-text="boss.hp">BOSS HP</span><strong id="boss-hp-value">-- / --</strong></div>
+          <div class="boss-hp-track" id="boss-hp-track" role="progressbar" aria-label="Boss 生命值" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" data-ui-aria="boss.hpBar">
             <span class="boss-hp-fill" id="boss-hp-fill"></span>
           </div>
         </div>
         <div class="boss-visual">
-          <svg class="boss-core" id="boss-core" viewBox="0 0 240 240" role="img" aria-label="黑色素暴君">
+          <div class="character-frame boss-character-frame" id="boss-character-frame">
+            <img class="character-image boss-character-image" id="boss-character-image" alt="" hidden>
+            <div class="character-fallback">
+          <svg class="boss-core" id="boss-core" viewBox="0 0 240 240" role="img" aria-label="黑色素暴君" data-ui-aria="boss.visualAlt">
             <defs>
               <linearGradient id="boss-body-gradient" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0" stop-color="#594253" />
@@ -108,12 +113,17 @@
             <ellipse cx="174" cy="158" rx="10" ry="6" fill="#211b29" opacity=".48" />
             <path d="m70 53-8-18 20 14m88 4 8-18-20 14" fill="#d6ad68" stroke="#fff1c4" stroke-width="3" stroke-linejoin="round" />
           </svg>
+            </div>
+          </div>
         </div>
-        <div class="boss-caption"><span>RAID BOSS</span><strong id="boss-name">BOSS A</strong></div>
+        <div class="boss-caption"><span data-ui-text="boss.label">RAID BOSS</span><strong id="boss-name"></strong></div>
       </aside>
 
-      <aside class="player-hero" aria-label="玩家角色，面向黑色素 Boss">
-        <svg class="player-hero-art" viewBox="0 0 240 240" role="img" aria-label="面向右側、手持精華能量杖的可愛護膚守衛">
+      <aside class="player-hero" aria-label="玩家角色，面向黑色素 Boss" data-ui-aria="player.role">
+        <div class="character-frame player-character-frame" id="player-character-frame">
+          <img class="character-image player-character-image" id="player-character-image" alt="" hidden>
+          <div class="character-fallback">
+        <svg class="player-hero-art" viewBox="0 0 240 240" role="img" aria-label="面向右側、手持精華能量杖的可愛護膚守衛" data-ui-aria="player.visualAlt">
           <defs>
             <linearGradient id="hero-coat-gradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stop-color="#fffdf5" />
@@ -160,16 +170,17 @@
           <circle cx="124" cy="28" r="12" fill="url(#hero-orb-gradient)" />
           <circle cx="124" cy="28" r="6.5" fill="#fff8c4" stroke="#fff" stroke-width="2" />
           <path d="m124 18 2.4 7.6 7.6 2.4-7.6 2.4-2.4 7.6-2.4-7.6-7.6-2.4 7.6-2.4Z" fill="#fffdf1" opacity=".85" />
-          <circle id="player-attack-origin" cx="124" cy="28" r="9" fill="transparent" aria-hidden="true" />
           <path d="M76 169q-13 8-17 24l15 9 14-15" fill="#f4c69f" stroke="#bd866e" stroke-width="4" stroke-linejoin="round" />
         </svg>
-        <div class="player-caption"><span>PLAYER</span><strong id="player-name">DDM守衛+0</strong></div>
+          </div>
+        </div>
+        <div class="player-caption"><span data-ui-text="player.label">PLAYER</span><strong id="player-name">DDM守衛+0</strong></div>
       </aside>
 
-      <aside class="right-panel" aria-label="下一顆與技能資訊">
-        <section class="right-panel-next" aria-label="下一顆精華預覽">
-          <aside class="next-panel glass-panel" aria-label="下一顆 DDM 精華">
-            <div class="panel-kicker">NEXT <span class="next-label">下一顆</span></div>
+      <aside class="right-panel" aria-label="下一顆與技能資訊" data-ui-aria="next.group">
+        <section class="right-panel-next" aria-label="下一顆精華預覽" data-ui-aria="next.section">
+          <aside class="next-panel glass-panel" aria-label="下一顆 DDM 精華" data-ui-aria="next.card">
+            <div class="panel-kicker"><span data-ui-text="next.kicker">NEXT</span><span class="next-label" data-ui-text="next.label">下一顆</span></div>
             <div class="next-preview-wrap" id="next-preview" data-level="1" aria-hidden="true">
               <canvas class="next-preview-canvas" id="next-preview-canvas"></canvas>
             </div>
@@ -177,76 +188,76 @@
           </aside>
         </section>
 
-        <aside class="max-rule-card glass-panel" aria-label="Lv9 MAX 合成規則">
+        <aside class="max-rule-card glass-panel" aria-label="Lv9 MAX 合成規則" data-ui-aria="rules.maxAria">
           <span class="max-rule-icon" aria-hidden="true">✦</span>
           <div class="max-rule-copy">
-            <strong>LV 9 (MAX) 精華</strong>
-            <p id="max-rule-description">合成後精華消除，並隨機補充 1 次技能。</p>
+            <strong data-ui-text="rules.maxTitle">LV 9 (MAX) 精華</strong>
+            <p id="max-rule-description" data-ui-text="rules.maxDescription">合成後精華會消除，並隨機補充 1 次技能。</p>
           </div>
         </aside>
 
-        <section class="right-skills" aria-label="技能">
-          <aside class="ddm-panel" aria-label="直接使用DDM">
+        <section class="right-skills" aria-label="技能" data-ui-aria="skills.group">
+          <aside class="ddm-panel" aria-label="直接使用DDM" data-ui-aria="skills.ddmAria">
             <button class="ddm-button skill-button" id="ddm-button" type="button" aria-pressed="false">
               <span class="ddm-icon" aria-hidden="true">
                 <svg viewBox="0 0 52 64" role="img"><path d="M19 4h14v9l8 8v32a6 6 0 0 1-6 6H17a6 6 0 0 1-6-6V21l8-8z"/><path d="M19 13h14M11 27h30"/><path class="bottle-cross" d="M26 33v13M19.5 39.5h13"/><path class="bottle-drop" d="M16 51c3-4 7-4 10 0"/></svg>
               </span>
-              <span class="ddm-copy"><strong>直接使用 DDM</strong><small>標準傷害 × 25%</small></span>
+              <span class="ddm-copy"><strong data-ui-text="skills.ddmTitle">直接使用 DDM</strong><small data-ui-text="skills.ddmDescription">標準傷害 × 25%</small></span>
               <span class="ddm-count" id="ddm-count">× 1 / 4</span>
               <span class="ddm-shine" aria-hidden="true"></span>
             </button>
-            <p class="ddm-hint" id="ddm-hint">選取精華，轉化為攻擊能量</p>
+            <p class="ddm-hint" id="ddm-hint" data-ui-text="skills.ddmHint">選取精華，轉化為攻擊能量</p>
           </aside>
 
-          <aside class="ssw-panel" aria-label="使用SSW+1">
+          <aside class="ssw-panel" aria-label="使用SSW+1" data-ui-aria="skills.sswAria">
             <button class="ssw-button skill-button" id="ssw-button" type="button" aria-pressed="false">
               <span class="ssw-icon" aria-hidden="true">✦</span>
-              <span class="ddm-copy"><strong>使用 SSW+1</strong><small>使用在Lv 8時不觸發獎勵</small></span>
+              <span class="ddm-copy"><strong data-ui-text="skills.sswTitle">使用 SSW+1</strong><small data-ui-text="skills.sswDescription">使用在Lv 8時不觸發獎勵</small></span>
               <span class="ddm-count" id="ssw-count">× 1 / 1</span>
               <span class="ddm-shine" aria-hidden="true"></span>
             </button>
-            <p class="ddm-hint" id="ssw-hint">選取一顆精華提升一級</p>
+            <p class="ddm-hint" id="ssw-hint" data-ui-text="skills.sswHint">選取一顆精華提升一級</p>
           </aside>
         </section>
       </aside>
 
       <div class="mode-banner" id="mode-banner" role="status" aria-live="polite" hidden>
-        <span class="mode-cross">✦</span><span id="skill-mode-message">選取一顆 DDM 精華使用技能</span><button id="cancel-skill" type="button" aria-label="取消技能選取">×</button>
+        <span class="mode-cross">✦</span><span id="skill-mode-message" data-ui-text="skills.modeBanner">選取一顆 DDM 精華使用技能</span><button id="cancel-skill" type="button" aria-label="取消技能選取" data-ui-aria="skills.cancel">×</button>
       </div>
 
       <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
       <div class="combo-pop" id="combo-pop" aria-live="polite" hidden></div>
 
       <div class="control-hint" aria-hidden="true">
-        <span class="mouse-glyph"><i></i></span><span>移動選位置</span><b>·</b><span>點擊放下</span>
-        <span class="hint-separator"></span><span class="touch-glyph">◎</span><span>觸控也可以玩</span>
+        <span class="mouse-glyph"><i></i></span><span data-ui-text="game.controlMove">移動選位置</span><b>·</b><span data-ui-text="game.controlDrop">點擊放下</span>
+        <span class="hint-separator"></span><span class="touch-glyph">◎</span><span data-ui-text="game.controlTouch">觸控也可以玩</span>
       </div>
 
-      <section class="game-over" id="game-over" hidden aria-labelledby="game-over-title" role="dialog" aria-modal="true">
+      <section class="game-over" id="game-over" hidden aria-labelledby="game-over-title" role="dialog" aria-modal="true" aria-label="遊戲結算" data-ui-aria="end.dialogLabel">
         <div class="game-over-card">
           <div class="over-badge" id="end-state-badge" aria-hidden="true">✦</div>
-          <p class="eyebrow" id="end-state-eyebrow">戰鬥結束</p>
-          <h2 id="game-over-title">這回合結束了</h2>
-          <p class="over-copy" id="game-over-copy">重新整理能量，再來挑戰黑色素暴君。</p>
-          <div class="over-stats"><div><span>本局最高等級</span><strong id="final-highest">LV 1</strong></div></div>
+          <p class="eyebrow" id="end-state-eyebrow" data-ui-text="end.eyebrow">戰鬥結束</p>
+          <h2 id="game-over-title" data-ui-text="end.title">這回合結束了</h2>
+          <p class="over-copy" id="game-over-copy" data-ui-text="end.copy">重新整理能量，再來挑戰黑色素暴君。</p>
+          <div class="over-stats"><div><span data-ui-text="end.highest">本局最高等級</span><strong id="final-highest">LV 1</strong></div></div>
           <div class="end-actions">
-            <button class="continue-game" id="continue-button" type="button" hidden>繼續遊戲</button>
-            <button class="continue-game" id="start-white-mode-button" type="button" hidden>開始 WHITE MODE</button>
-            <button class="play-again" id="restart-button" type="button"><span>↻</span> 重開一局</button>
+            <button class="continue-game" id="continue-button" type="button" hidden data-ui-text="end.continue">繼續遊戲</button>
+            <button class="continue-game" id="start-white-mode-button" type="button" hidden data-ui-text="end.startWhiteMode">開始 WHITE MODE</button>
+            <button class="play-again" id="restart-button" type="button"><span>↻</span> <span data-ui-text="end.restart">重開一局</span></button>
           </div>
         </div>
       </section>
 
-      <aside class="theme-switcher" id="theme-switcher" aria-label="精華色系切換">
-        <span class="theme-switcher-label">精華色系</span>
-        <div class="theme-options" id="theme-options" role="group" aria-label="選擇精華的色系"></div>
+      <aside class="theme-switcher" id="theme-switcher" aria-label="精華色系切換" data-ui-aria="theme.selector">
+        <span class="theme-switcher-label" data-ui-text="theme.label">精華色系</span>
+        <div class="theme-options" id="theme-options" role="group" aria-label="選擇精華的色系" data-ui-aria="theme.choose"></div>
       </aside>
     </section>
     <div class="orientation-warning" id="orientation-warning" role="status" aria-live="polite" hidden>
       <div class="orientation-warning-card">
         <span aria-hidden="true">↻</span>
-        <strong>建議使用直向模式</strong>
-        <p>請將裝置轉回直向，讓遊戲與操作區完整顯示。</p>
+        <strong data-ui-text="orientation.title">建議使用直向模式</strong>
+        <p data-ui-text="orientation.copy">請將裝置轉回直向，讓遊戲與操作區完整顯示。</p>
       </div>
     </div>
   </main>

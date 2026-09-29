@@ -1,9 +1,11 @@
 (function (global) {
   'use strict';
 
+  const PLAYER_BODY_CENTER_RATIO = 0.55;
+
   function createAttackEffects(options) {
     const {
-      BOSS_CONFIG, attackEffectsEl, bossCoreEl, playerAttackOriginEl,
+      BOSS_CONFIG, attackEffectsEl, bossCharacterFrameEl, playerCharacterFrameEl, text,
       getLayoutMetrics, getGameMode, getBossHp, isPaused,
       formatNumber, schedule, applyCombatValue, clamp
     } = options;
@@ -78,7 +80,7 @@
       damageLabel.setAttribute('x', String(endX));
       damageLabel.setAttribute('y', String(endY - 28));
       damageLabel.setAttribute('text-anchor', 'middle');
-      damageLabel.textContent = `${getGameMode() === 'whiteScore' ? '+' : '−'}${formatNumber(damage)}`;
+      damageLabel.textContent = text.get(getGameMode() === 'whiteScore' ? 'attack.whiteScore' : 'attack.damage', { damage: formatNumber(damage) });
       effect.append(damageLabel);
 
       attackEffectsEl.append(effect);
@@ -120,12 +122,12 @@
 
     function getAttackCoordinates() {
       const { frameRect, scaleX, scaleY } = getLayoutMetrics();
-      const bossRect = bossCoreEl.getBoundingClientRect();
-      const playerOriginRect = playerAttackOriginEl.getBoundingClientRect();
-      if (!frameRect.width || !scaleX || !scaleY || !bossRect.width || !bossRect.height || !playerOriginRect.width || !playerOriginRect.height) return null;
+      const bossRect = bossCharacterFrameEl.getBoundingClientRect();
+      const playerRect = playerCharacterFrameEl.getBoundingClientRect();
+      if (!frameRect.width || !scaleX || !scaleY || !bossRect.width || !bossRect.height || !playerRect.width || !playerRect.height) return null;
 
-      const startX = (playerOriginRect.left + playerOriginRect.width / 2 - frameRect.left) / scaleX;
-      const startY = (playerOriginRect.top + playerOriginRect.height / 2 - frameRect.top) / scaleY;
+      const startX = (playerRect.left + playerRect.width / 2 - frameRect.left) / scaleX;
+      const startY = (playerRect.top + playerRect.height * PLAYER_BODY_CENTER_RATIO - frameRect.top) / scaleY;
       const endX = (bossRect.left + bossRect.width / 2 - frameRect.left) / scaleX;
       const endY = (bossRect.top + bossRect.height / 2 - frameRect.top) / scaleY;
       const distance = Math.hypot(endX - startX, endY - startY);
