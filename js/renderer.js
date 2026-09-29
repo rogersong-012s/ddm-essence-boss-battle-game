@@ -12,11 +12,8 @@
   function createRenderer(options) {
     const { canvas, ctx, nextPreviewCanvas, nextPreviewCtx, config, getState, clamp } = options;
     const MAX_LEVEL = config.LAYOUT.ballDiameterRatios.length - 1;
-    const {
-      LOGICAL_WIDTH, LOGICAL_HEIGHT, GAME_LEFT, GAME_RIGHT, GAME_TOP, GAME_FLOOR, DROP_Y,
-      PLAYFIELD_BOTTOM, WALL_THICKNESS, BOWL_SIDE_PADDING, BOWL_TOP_PADDING,
-      DANGER_LABEL_FONT_SIZE, DDM_FADE_DURATION, MAX_PRESENTATION_DURATION, MERGE_DELAY
-    } = config;
+    const { DDM_FADE_DURATION, MAX_PRESENTATION_DURATION, MERGE_DELAY } = config;
+    let layout = options.layout || config;
     let {
       gameTime, dangerSince, dangerLineWarning, particles, entities, activeSkill, gamePaused,
       currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y, playerBallScale, uiScale
@@ -40,7 +37,7 @@
 
     function draw() {
       syncState();
-      ctx.clearRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+      ctx.clearRect(0, 0, layout.LOGICAL_WIDTH, layout.LOGICAL_HEIGHT);
       drawBackgroundAccents();
       drawBowl();
       drawParticles();
@@ -74,10 +71,10 @@
     }
 
     function drawBowl() {
-      const left = GAME_LEFT - BOWL_SIDE_PADDING;
-      const right = GAME_RIGHT + BOWL_SIDE_PADDING;
-      const top = GAME_TOP - BOWL_TOP_PADDING;
-      const bottom = PLAYFIELD_BOTTOM;
+      const left = layout.GAME_LEFT - layout.BOWL_SIDE_PADDING;
+      const right = layout.GAME_RIGHT + layout.BOWL_SIDE_PADDING;
+      const top = layout.GAME_TOP - layout.BOWL_TOP_PADDING;
+      const bottom = layout.PLAYFIELD_BOTTOM;
       const width = right - left;
       const height = bottom - top;
 
@@ -131,13 +128,13 @@
       ctx.lineWidth = 3;
       ctx.strokeStyle = 'rgba(169,218,204,.86)';
       ctx.beginPath();
-      ctx.moveTo(GAME_LEFT, top + 24);
-      ctx.lineTo(GAME_LEFT, GAME_FLOOR - 6);
-      ctx.moveTo(GAME_RIGHT, top + 24);
-      ctx.lineTo(GAME_RIGHT, GAME_FLOOR - 6);
+      ctx.moveTo(layout.GAME_LEFT, top + 24);
+      ctx.lineTo(layout.GAME_LEFT, layout.GAME_FLOOR - 6);
+      ctx.moveTo(layout.GAME_RIGHT, top + 24);
+      ctx.lineTo(layout.GAME_RIGHT, layout.GAME_FLOOR - 6);
       ctx.stroke();
       ctx.fillStyle = 'rgba(255,255,255,.76)';
-      roundedRect(ctx, GAME_LEFT - 6, GAME_FLOOR - 6, GAME_RIGHT - GAME_LEFT + 12, 18, 9);
+      roundedRect(ctx, layout.GAME_LEFT - 6, layout.GAME_FLOOR - 6, layout.GAME_RIGHT - layout.GAME_LEFT + 12, 18, 9);
       ctx.fill();
       ctx.restore();
 
@@ -157,22 +154,22 @@
         ctx.shadowBlur = 9;
       }
       ctx.beginPath();
-      ctx.moveTo(GAME_LEFT + 18, DANGER_LINE_Y);
-      ctx.lineTo(GAME_RIGHT - 18, DANGER_LINE_Y);
+      ctx.moveTo(layout.GAME_LEFT + 18, DANGER_LINE_Y);
+      ctx.lineTo(layout.GAME_RIGHT - 18, DANGER_LINE_Y);
       ctx.stroke();
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
       ctx.setLineDash([]);
-      ctx.font = '700 ' + DANGER_LABEL_FONT_SIZE + 'px "DM Sans", "Noto Sans TC", sans-serif';
+      ctx.font = '700 ' + layout.DANGER_LABEL_FONT_SIZE + 'px "DM Sans", "Noto Sans TC", sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       const label = '危險線';
       const textWidth = ctx.measureText(label).width;
-      roundedRect(ctx, GAME_LEFT + 23, DANGER_LINE_Y - 16, textWidth + 20, 31, 15);
+      roundedRect(ctx, layout.GAME_LEFT + 23, DANGER_LINE_Y - 16, textWidth + 20, 31, 15);
       ctx.fillStyle = warningFlash ? 'rgba(255,235,232,.98)' : 'rgba(255,255,255,.94)';
       ctx.fill();
       ctx.fillStyle = warningFlash ? '#ff3b30' : '#aa5b4d';
-      ctx.fillText(label, GAME_LEFT + 33, DANGER_LINE_Y);
+      ctx.fillText(label, layout.GAME_LEFT + 33, DANGER_LINE_Y);
       ctx.restore();
     }
 
@@ -239,17 +236,17 @@
     function drawDropPreview() {
       if (gamePaused || currentLevel == null) return;
       const radius = MELANIN_LEVELS[currentLevel].diameter / 2 * playerBallScale;
-      const x = clamp(currentDropX, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4);
+      const x = clamp(currentDropX, layout.GAME_LEFT + radius + 4, layout.GAME_RIGHT - radius - 4);
       ctx.save();
       ctx.setLineDash([4, 8]);
       ctx.strokeStyle = 'rgba(145, 111, 96, .32)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(x, DROP_Y + radius + 9);
-      ctx.lineTo(x, GAME_FLOOR - 12);
+      ctx.moveTo(x, layout.DROP_Y + radius + 9);
+      ctx.lineTo(x, layout.GAME_FLOOR - 12);
       ctx.stroke();
       ctx.restore();
-      drawMelanin(x, DROP_Y + radius, currentLevel, radius, 1, .84, false);
+      drawMelanin(x, layout.DROP_Y + radius, currentLevel, radius, 1, .84, false);
     }
 
     function drawMelanin(x, y, level, radius, scale = 1, alpha = 1, isSpecial = false, specialAge = 0, renderContext = ctx) {
@@ -470,7 +467,11 @@
     function easeOutCubic(value) { return 1 - (1 - value) ** 3; }
     function easeOutBack(value) { const c1 = 1.70158; const c3 = c1 + 1; return 1 + c3 * (value - 1) ** 3 + c1 * (value - 1) ** 2; }
 
-    return Object.freeze({ draw, resizeNextPreview });
+    function updateLayout(nextLayout) {
+      layout = nextLayout;
+    }
+
+    return Object.freeze({ draw, resizeNextPreview, updateLayout });
   }
 
   global.DDMGameRenderer = Object.freeze({ createRenderer, calculateNextPreviewRadius });

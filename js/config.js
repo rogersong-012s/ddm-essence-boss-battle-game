@@ -14,6 +14,18 @@
     debugSpawnY: 610 / REFERENCE_HEIGHT
   });
 
+  const MOBILE_REFERENCE_WIDTH = 430;
+  const MOBILE_REFERENCE_HEIGHT = 932;
+  const MOBILE_LAYOUT = Object.freeze({
+    referenceFrame: Object.freeze({ width: MOBILE_REFERENCE_WIDTH, height: MOBILE_REFERENCE_HEIGHT }),
+    playfield: Object.freeze({ x: 35 / MOBILE_REFERENCE_WIDTH, y: 295 / MOBILE_REFERENCE_HEIGHT, width: 360 / MOBILE_REFERENCE_WIDTH, height: 493 / MOBILE_REFERENCE_HEIGHT }),
+    dropOffset: LAYOUT.dropOffset,
+    bowlPadding: Object.freeze({ side: LAYOUT.bowlPadding.side, top: 0, bottom: LAYOUT.bowlPadding.bottom }),
+    walls: LAYOUT.walls,
+    ballDiameterRatios: LAYOUT.ballDiameterRatios,
+    debugSpawnY: 610 / REFERENCE_HEIGHT
+  });
+
   const LOGICAL_WIDTH = LAYOUT.referenceFrame.width;
   const LOGICAL_HEIGHT = LAYOUT.referenceFrame.height;
   const PLAYFIELD_WIDTH = Math.round(LOGICAL_WIDTH * LAYOUT.playfield.width);
@@ -31,8 +43,43 @@
   const BOWL_BOTTOM_PADDING = Math.round(PLAYFIELD_HEIGHT * LAYOUT.bowlPadding.bottom);
   const PLAYFIELD_BOTTOM = GAME_FLOOR + BOWL_BOTTOM_PADDING;
 
-  function ballDiameterForLevel(level) {
-    return Math.round(PLAYFIELD_WIDTH * LAYOUT.ballDiameterRatios[level]);
+  function createRuntimeLayout(mode = 'desktop') {
+    const layout = mode === 'mobile' ? MOBILE_LAYOUT : LAYOUT;
+    const logicalWidth = layout.referenceFrame.width;
+    const logicalHeight = layout.referenceFrame.height;
+    const playfieldWidth = Math.round(logicalWidth * layout.playfield.width);
+    const playfieldHeight = Math.round(logicalHeight * layout.playfield.height);
+    const gameLeft = Math.round(logicalWidth * layout.playfield.x);
+    const gameRight = gameLeft + playfieldWidth;
+    const gameTop = Math.round(logicalHeight * layout.playfield.y);
+    const gameFloor = gameTop + playfieldHeight;
+    const bowlBottomPadding = Math.round(playfieldHeight * layout.bowlPadding.bottom);
+
+    return Object.freeze({
+      mode,
+      LAYOUT: layout,
+      LOGICAL_WIDTH: logicalWidth,
+      LOGICAL_HEIGHT: logicalHeight,
+      PLAYFIELD_WIDTH: playfieldWidth,
+      PLAYFIELD_HEIGHT: playfieldHeight,
+      GAME_LEFT: gameLeft,
+      GAME_RIGHT: gameRight,
+      PLAYFIELD_CENTER_X: (gameLeft + gameRight) / 2,
+      GAME_TOP: gameTop,
+      GAME_FLOOR: gameFloor,
+      DROP_Y: gameTop + Math.round(playfieldHeight * layout.dropOffset),
+      WALL_THICKNESS: Math.round(playfieldWidth * layout.walls.thickness),
+      WALL_EXTENSION: Math.round(playfieldHeight * layout.walls.extension),
+      BOWL_SIDE_PADDING: Math.round(playfieldWidth * layout.bowlPadding.side),
+      BOWL_TOP_PADDING: Math.round(playfieldHeight * layout.bowlPadding.top),
+      BOWL_BOTTOM_PADDING: bowlBottomPadding,
+      PLAYFIELD_BOTTOM: gameFloor + bowlBottomPadding,
+      DANGER_LABEL_FONT_SIZE: mode === 'mobile' ? 12 : logicalWidth * (14 / REFERENCE_WIDTH)
+    });
+  }
+
+  function ballDiameterForLevel(level, playfieldWidth = PLAYFIELD_WIDTH) {
+    return Math.round(playfieldWidth * LAYOUT.ballDiameterRatios[level]);
   }
 
   const SKILL_CONFIG = Object.freeze({
@@ -65,6 +112,10 @@
     REFERENCE_HEIGHT,
     DANGER_ZONE_DIAMETER_MULTIPLIER,
     LAYOUT,
+    MOBILE_LAYOUT,
+    MOBILE_REFERENCE_WIDTH,
+    MOBILE_REFERENCE_HEIGHT,
+    createRuntimeLayout,
     LOGICAL_WIDTH,
     LOGICAL_HEIGHT,
     PLAYFIELD_WIDTH,

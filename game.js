@@ -7,24 +7,21 @@
   // Gameplay constants, theme assets, and mutable run state have one owner each.
   const GAME_CONFIG = window.DDMGameConfig;
   const {
-    DEBUG, REFERENCE_WIDTH, REFERENCE_HEIGHT, DANGER_ZONE_DIAMETER_MULTIPLIER, LAYOUT,
-    LOGICAL_WIDTH, LOGICAL_HEIGHT, PLAYFIELD_WIDTH, PLAYFIELD_HEIGHT, SKILL_CONFIG, DROP_DAMAGE,
+    DEBUG, DANGER_ZONE_DIAMETER_MULTIPLIER, SKILL_CONFIG, DROP_DAMAGE,
     DANGER_DURATION_MS, CENTRAL_TOAST_DURATION_MULTIPLIER, WHITE_SCORE_DROP_LEVELS, DROP_COOLDOWN, PHYSICS_GRAVITY, PHYSICS_GRAVITY_SCALE, PHYSICS_TIMESTEP,
     MAX_PHYSICS_STEPS_PER_FRAME, MERGE_DELAY, DDM_FADE_DURATION, MAX_PRESENTATION_DURATION,
-    COMBO_WINDOW, MAX_MELANIN_BONUS, BOSS_CONFIG, SCORE_TABLE, GAME_LEFT, GAME_RIGHT,
-    PLAYFIELD_CENTER_X, GAME_TOP, GAME_FLOOR, DROP_Y, WALL_THICKNESS, WALL_EXTENSION,
-    BOWL_SIDE_PADDING, BOWL_TOP_PADDING, BOWL_BOTTOM_PADDING, PLAYFIELD_BOTTOM,
-    MAX_FRAME_DELTA, MAX_CANVAS_SCALE, DANGER_LABEL_FONT_SIZE
+    COMBO_WINDOW, MAX_MELANIN_BONUS, BOSS_CONFIG, SCORE_TABLE, MAX_FRAME_DELTA, MAX_CANVAS_SCALE
   } = GAME_CONFIG;
-  const { WARM_LEVELS, BALL_THEMES } = window.DDMGameThemes.create(GAME_CONFIG.ballDiameterForLevel);
-  const MAX_LEVEL = WARM_LEVELS.length - 1;
+  let runtimeLayout = GAME_CONFIG.createRuntimeLayout(window.DDMMobileUI?.getMode?.() || 'desktop');
+  let BALL_THEMES = window.DDMGameThemes.create((level) => GAME_CONFIG.ballDiameterForLevel(level, runtimeLayout.PLAYFIELD_WIDTH)).BALL_THEMES;
+  const MAX_LEVEL = BALL_THEMES.warm.levels.length - 1;
   const SECOND_HIGHEST_LEVEL = MAX_LEVEL - 1;
   let currentThemeKey = 'rainbow';
   let MELANIN_LEVELS = BALL_THEMES[currentThemeKey].levels;
   let secondHighestRadius = MELANIN_LEVELS[SECOND_HIGHEST_LEVEL].diameter / 2;
   let secondHighestDiameter = secondHighestRadius * 2;
   let dangerZoneHeight = secondHighestDiameter * DANGER_ZONE_DIAMETER_MULTIPLIER;
-  let DANGER_LINE_Y = PLAYFIELD_BOTTOM - dangerZoneHeight;
+  let DANGER_LINE_Y = runtimeLayout.PLAYFIELD_BOTTOM - dangerZoneHeight;
   let lastDangerDebugKey = '';
 
   const canvas = document.querySelector('#game-canvas');
@@ -81,6 +78,7 @@
   const playerProgression = window.DDMGameProgression.createPlayerProgression(GAME_CONFIG, playerNameEl);
 
   let engine;
+  let bowlBodies = [];
   let entities = new Map();
   let timers = new Set();
   let particles = [];
@@ -106,8 +104,8 @@
   let pointerDownStartedInsidePlayfield = false;
   let activePointerId = null;
   let activePointerType = 'mouse';
-  let lastValidDropX = PLAYFIELD_CENTER_X;
-  let currentDropX = PLAYFIELD_CENTER_X;
+  let lastValidDropX = runtimeLayout.PLAYFIELD_CENTER_X;
+  let currentDropX = runtimeLayout.PLAYFIELD_CENTER_X;
   let dangerSince = null;
   const dangerTimer = window.DDMGameDangerZone.createDangerTimer(DANGER_DURATION_MS);
   let dangerLineWarning = false;
@@ -117,6 +115,7 @@
   let toastTimer = null;
   let comboTimer = null;
   let resizeObserver;
+  let presentationLandscape = window.DDMMobileUI?.isLandscape?.() || false;
 
   const combat = window.DDMGameCombat.createCombatSystem({
     config: BOSS_CONFIG,
@@ -133,9 +132,9 @@
     isPaused: () => gamePaused, formatNumber, schedule,
     applyCombatValue: (...args) => combat.applyCombatValue(...args), clamp
   });
-  const { playPlayerAttackEffect, cancelUnresolvedBossAttacks, clearBossAttackEffects } = attackEffects;
+  const { playPlayerAttackEffect, cancelUnresolvedBossAttacks, clearBossAttackEffects, reflowBossAttackEffects } = attackEffects;
   const renderer = window.DDMGameRenderer.createRenderer({
-    canvas, ctx, nextPreviewCanvas, nextPreviewCtx, config: GAME_CONFIG, clamp,
+    canvas, ctx, nextPreviewCanvas, nextPreviewCtx, config: GAME_CONFIG, layout: runtimeLayout, clamp,
     getState: () => ({
       gameTime, dangerSince, dangerLineWarning, particles, entities, activeSkill, gamePaused,
       currentLevel, currentDropX, nextLevel, MELANIN_LEVELS, DANGER_LINE_Y,
@@ -151,6 +150,7 @@
   }
 
   const { Engine, Bodies, Body, Sleeping, Composite, Events } = Matter;
+  attackEffectsEl.setAttribute('viewBox', `0 0 ${runtimeLayout.LOGICAL_WIDTH} ${runtimeLayout.LOGICAL_HEIGHT}`);
   const ballSizeManager = window.DDMGameBallSizes.createBallSizeManager({
     Body,
     getEntities: () => entities,
@@ -177,6 +177,14 @@
   resizeObserver = new ResizeObserver(resizeGame);
   resizeObserver.observe(wrapper);
   window.addEventListener('resize', resizeGame, { passive: true });
+  window.addEventListener('ddm-ui-mode-change', (event) => setRuntimeLayoutMode(event.detail?.mode));
+  window.addEventListener('ddm-orientation-change', (event) => {
+    presentationLandscape = Boolean(event.detail?.landscape);
+    if (presentationLandscape) {
+      resetPointerGesture();
+      isPointerInsidePlayfield = false;
+    }
+  });
   canvas.addEventListener('pointerenter', handlePointerMove);
   canvas.addEventListener('pointermove', handlePointerMove);
   canvas.addEventListener('pointerleave', handlePointerLeave);
@@ -215,13 +223,14 @@
   }
 
   function createWalls() {
-    const wallHeight = PLAYFIELD_HEIGHT + WALL_EXTENSION;
-    const wallCenterY = (GAME_FLOOR + GAME_TOP) / 2;
+    const wallHeight = runtimeLayout.PLAYFIELD_HEIGHT + runtimeLayout.WALL_EXTENSION;
+    const wallCenterY = (runtimeLayout.GAME_FLOOR + runtimeLayout.GAME_TOP) / 2;
     const options = { isStatic: true, friction: 0.48, restitution: 0.18, label: 'bowl-wall' };
-    const leftWall = Bodies.rectangle(GAME_LEFT - WALL_THICKNESS / 2, wallCenterY, WALL_THICKNESS, wallHeight, options);
-    const rightWall = Bodies.rectangle(GAME_RIGHT + WALL_THICKNESS / 2, wallCenterY, WALL_THICKNESS, wallHeight, options);
-    const floor = Bodies.rectangle((GAME_LEFT + GAME_RIGHT) / 2, GAME_FLOOR + WALL_THICKNESS / 2, GAME_RIGHT - GAME_LEFT + WALL_THICKNESS * 2, WALL_THICKNESS, options);
-    Composite.add(engine.world, [leftWall, rightWall, floor]);
+    const leftWall = Bodies.rectangle(runtimeLayout.GAME_LEFT - runtimeLayout.WALL_THICKNESS / 2, wallCenterY, runtimeLayout.WALL_THICKNESS, wallHeight, options);
+    const rightWall = Bodies.rectangle(runtimeLayout.GAME_RIGHT + runtimeLayout.WALL_THICKNESS / 2, wallCenterY, runtimeLayout.WALL_THICKNESS, wallHeight, options);
+    const floor = Bodies.rectangle((runtimeLayout.GAME_LEFT + runtimeLayout.GAME_RIGHT) / 2, runtimeLayout.GAME_FLOOR + runtimeLayout.WALL_THICKNESS / 2, runtimeLayout.GAME_RIGHT - runtimeLayout.GAME_LEFT + runtimeLayout.WALL_THICKNESS * 2, runtimeLayout.WALL_THICKNESS, options);
+    bowlBodies = [leftWall, rightWall, floor];
+    Composite.add(engine.world, bowlBodies);
   }
 
   function createMelanin(level, x, y, options = {}) {
@@ -312,8 +321,8 @@
     if (gamePaused) return;
     currentLevel = nextLevel;
     const radius = ballSizeManager.getScaledRadius(currentLevel);
-    const spawnX = isPointerInsidePlayfield ? lastValidDropX : PLAYFIELD_CENTER_X;
-    currentDropX = clamp(spawnX, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4);
+    const spawnX = isPointerInsidePlayfield ? lastValidDropX : runtimeLayout.PLAYFIELD_CENTER_X;
+    currentDropX = clamp(spawnX, runtimeLayout.GAME_LEFT + radius + 4, runtimeLayout.GAME_RIGHT - radius - 4);
     if (isPointerInsidePlayfield) lastValidDropX = currentDropX;
     registerReachedLevel(currentLevel);
     nextLevel = randomDropLevel();
@@ -328,7 +337,7 @@
   }
 
   function getUIScale(frameWidth = wrapper.clientWidth) {
-    return frameWidth / REFERENCE_WIDTH;
+    return frameWidth / runtimeLayout.LOGICAL_WIDTH;
   }
 
   function updateDangerLineGeometry(uiScale) {
@@ -336,11 +345,11 @@
     secondHighestRadius = MELANIN_LEVELS[SECOND_HIGHEST_LEVEL].diameter / 2;
     secondHighestDiameter = secondHighestRadius * 2;
     dangerZoneHeight = secondHighestDiameter * DANGER_ZONE_DIAMETER_MULTIPLIER;
-    DANGER_LINE_Y = PLAYFIELD_BOTTOM - dangerZoneHeight;
+    DANGER_LINE_Y = runtimeLayout.PLAYFIELD_BOTTOM - dangerZoneHeight;
     const debugKey = String(uiScale) + ':' + secondHighestDiameter;
     if (DEBUG && debugKey !== lastDangerDebugKey) {
       console.debug('[Melanin Merge] danger line geometry', {
-        uiScale, playfieldHeight: PLAYFIELD_HEIGHT, playfieldBottom: PLAYFIELD_BOTTOM, secondHighestRadius,
+        uiScale, playfieldHeight: runtimeLayout.PLAYFIELD_HEIGHT, playfieldBottom: runtimeLayout.PLAYFIELD_BOTTOM, secondHighestRadius,
         secondHighestDiameter, dangerZoneHeight, dangerLineY: DANGER_LINE_Y
       });
       lastDangerDebugKey = debugKey;
@@ -350,13 +359,13 @@
   function getLayoutMetrics() {
     const frameRect = wrapper.getBoundingClientRect();
     const canvasRect = canvas.getBoundingClientRect();
-    const scaleX = canvasRect.width / LOGICAL_WIDTH;
-    const scaleY = canvasRect.height / LOGICAL_HEIGHT;
+    const scaleX = canvasRect.width / runtimeLayout.LOGICAL_WIDTH;
+    const scaleY = canvasRect.height / runtimeLayout.LOGICAL_HEIGHT;
     const playfieldRect = {
-      left: canvasRect.left + GAME_LEFT * scaleX,
-      top: canvasRect.top + (GAME_TOP - BOWL_TOP_PADDING) * scaleY,
-      right: canvasRect.left + GAME_RIGHT * scaleX,
-      bottom: canvasRect.top + PLAYFIELD_BOTTOM * scaleY
+      left: canvasRect.left + runtimeLayout.GAME_LEFT * scaleX,
+      top: canvasRect.top + (runtimeLayout.GAME_TOP - runtimeLayout.BOWL_TOP_PADDING) * scaleY,
+      right: canvasRect.left + runtimeLayout.GAME_RIGHT * scaleX,
+      bottom: canvasRect.top + runtimeLayout.PLAYFIELD_BOTTOM * scaleY
     };
     playfieldRect.width = playfieldRect.right - playfieldRect.left;
     playfieldRect.height = playfieldRect.bottom - playfieldRect.top;
@@ -373,7 +382,16 @@
 
   function updateCombatLayout(metrics = getLayoutMetrics()) {
     const { frameRect, playfieldRect } = metrics;
-    if (!frameRect.width || !frameRect.height) return;
+    if (!frameRect.width || !frameRect.height || runtimeLayout.mode === 'mobile') {
+      if (runtimeLayout.mode === 'mobile') {
+        bossTargetEl.style.left = '';
+        bossTargetEl.style.top = '';
+        playerHeroEl.style.left = '';
+        playerHeroEl.style.top = '';
+        playerHeroEl.style.bottom = '';
+      }
+      return;
+    }
 
     const leftZoneCenterX = (frameRect.left + playfieldRect.left) / 2;
     const leftZoneCenterPercent = ((leftZoneCenterX - frameRect.left) / frameRect.width) * 100;
@@ -392,6 +410,82 @@
     playerHeroEl.style.top = `${(playerTop / frameRect.height) * 100}%`;
   }
 
+  function setRuntimeLayoutMode(mode) {
+    if (!engine || !['desktop', 'mobile'].includes(mode) || runtimeLayout.mode === mode) return;
+
+    const previousLayout = runtimeLayout;
+    const nextLayout = GAME_CONFIG.createRuntimeLayout(mode);
+    const scaleX = nextLayout.PLAYFIELD_WIDTH / previousLayout.PLAYFIELD_WIDTH;
+    const scaleY = nextLayout.PLAYFIELD_HEIGHT / previousLayout.PLAYFIELD_HEIGHT;
+    const previousDropX = currentDropX;
+    const previousPointerX = lastValidDropX;
+    const themes = window.DDMGameThemes.create((level) => GAME_CONFIG.ballDiameterForLevel(level, nextLayout.PLAYFIELD_WIDTH)).BALL_THEMES;
+
+    runtimeLayout = nextLayout;
+    BALL_THEMES = themes;
+    MELANIN_LEVELS = BALL_THEMES[currentThemeKey].levels;
+
+    const progressionScale = playerProgression.getBallScale();
+    for (const entity of entities.values()) {
+      const body = entity.body;
+      const position = mapGamePoint(body.position, previousLayout, nextLayout);
+      const velocity = { x: body.velocity.x * scaleX, y: body.velocity.y * scaleY };
+      const angularVelocity = body.angularVelocity;
+      const baseRadius = MELANIN_LEVELS[entity.level].diameter / 2;
+      const radius = baseRadius * progressionScale;
+      const scaleFactor = radius / entity.radius;
+
+      if (Number.isFinite(scaleFactor) && scaleFactor > 0 && Math.abs(scaleFactor - 1) > 1e-12) {
+        Body.scale(body, scaleFactor, scaleFactor);
+      }
+      position.x = clamp(position.x, runtimeLayout.GAME_LEFT + radius + 1, runtimeLayout.GAME_RIGHT - radius - 1);
+      position.y = Math.min(position.y, runtimeLayout.GAME_FLOOR - radius - 1);
+      Body.setPosition(body, position);
+      if (!body.isStatic) {
+        Body.setVelocity(body, velocity);
+        Body.setAngularVelocity(body, angularVelocity);
+      }
+      entity.baseRadius = baseRadius;
+      entity.radius = radius;
+    }
+
+    for (const particle of particles) {
+      const position = mapGamePoint(particle, previousLayout, nextLayout);
+      particle.x = position.x;
+      particle.y = position.y;
+      particle.vx *= scaleX;
+      particle.vy *= scaleY;
+    }
+
+    currentDropX = nextLayout.GAME_LEFT + (previousDropX - previousLayout.GAME_LEFT) * scaleX;
+    lastValidDropX = nextLayout.GAME_LEFT + (previousPointerX - previousLayout.GAME_LEFT) * scaleX;
+    currentDropX = clamp(currentDropX, runtimeLayout.GAME_LEFT + 4, runtimeLayout.GAME_RIGHT - 4);
+    lastValidDropX = clamp(lastValidDropX, runtimeLayout.GAME_LEFT + 4, runtimeLayout.GAME_RIGHT - 4);
+
+    for (const wall of bowlBodies) Composite.remove(engine.world, wall, true);
+    bowlBodies = [];
+    createWalls();
+
+    attackEffectsEl.setAttribute('viewBox', `0 0 ${runtimeLayout.LOGICAL_WIDTH} ${runtimeLayout.LOGICAL_HEIGHT}`);
+    renderer.updateLayout(runtimeLayout);
+    updateDangerLineGeometry(getUIScale());
+    updateThemeSelector();
+    resetPointerGesture();
+    isPointerInsidePlayfield = false;
+    resizeGame();
+    reflowBossAttackEffects();
+    renderer.draw();
+  }
+
+  function mapGamePoint(point, fromLayout, toLayout) {
+    const scaleX = toLayout.PLAYFIELD_WIDTH / fromLayout.PLAYFIELD_WIDTH;
+    const scaleY = toLayout.PLAYFIELD_HEIGHT / fromLayout.PLAYFIELD_HEIGHT;
+    return {
+      x: toLayout.GAME_LEFT + (point.x - fromLayout.GAME_LEFT) * scaleX,
+      y: toLayout.GAME_TOP + (point.y - fromLayout.GAME_TOP) * scaleY
+    };
+  }
+
   function isPointInsidePlayfield(clientX, clientY) {
     const { playfieldRect } = getLayoutMetrics();
     return clientX >= playfieldRect.left
@@ -401,7 +495,7 @@
   }
 
   function handlePointerMove(event) {
-    if (!isPointInsidePlayfield(event.clientX, event.clientY)) {
+    if (gamePaused || presentationLandscape || !isPointInsidePlayfield(event.clientX, event.clientY)) {
       isPointerInsidePlayfield = false;
       return;
     }
@@ -413,7 +507,7 @@
   }
 
   function handlePointerDown(event) {
-    if (gamePaused || activePointerId != null || event.button !== 0) return;
+    if (gamePaused || presentationLandscape || activePointerId != null || event.button !== 0) return;
     activePointerId = event.pointerId;
     activePointerType = event.pointerType || 'mouse';
     pointerDownStartedInsidePlayfield = isPointInsidePlayfield(event.clientX, event.clientY);
@@ -422,6 +516,7 @@
       return;
     }
     event.preventDefault();
+    try { canvas.setPointerCapture(event.pointerId); } catch { /* Implicit touch capture still handles this gesture. */ }
     updateDropPreviewPosition(toLogicalPoint(event));
   }
 
@@ -432,7 +527,7 @@
     const pointerType = activePointerType;
     resetPointerGesture();
     if (!endedInside) isPointerInsidePlayfield = false;
-    if (!startedInside || !endedInside || gamePaused) return;
+    if (!startedInside || !endedInside || gamePaused || presentationLandscape) return;
 
     event.preventDefault();
     const point = toLogicalPoint(event);
@@ -461,13 +556,13 @@
     isPointerInsidePlayfield = true;
     if (currentLevel == null) return;
     const radius = ballSizeManager.getScaledRadius(currentLevel);
-    lastValidDropX = clamp(point.x, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4);
+    lastValidDropX = clamp(point.x, runtimeLayout.GAME_LEFT + radius + 4, runtimeLayout.GAME_RIGHT - radius - 4);
     currentDropX = lastValidDropX;
   }
 
   function toLogicalPoint(event) {
     const { canvasRect, scaleX, scaleY } = getLayoutMetrics();
-    if (!scaleX || !scaleY) return { x: PLAYFIELD_CENTER_X, y: GAME_TOP };
+    if (!scaleX || !scaleY) return { x: runtimeLayout.PLAYFIELD_CENTER_X, y: runtimeLayout.GAME_TOP };
     return {
       x: (event.clientX - canvasRect.left) / scaleX,
       y: (event.clientY - canvasRect.top) / scaleY
@@ -478,7 +573,7 @@
     if (gamePaused || activeSkill || !readyToDrop || currentLevel == null) return;
     const level = currentLevel;
     const radius = ballSizeManager.getScaledRadius(level);
-    createMelanin(level, clamp(x, GAME_LEFT + radius + 3, GAME_RIGHT - radius - 3), DROP_Y + radius, {});
+    createMelanin(level, clamp(x, runtimeLayout.GAME_LEFT + radius + 3, runtimeLayout.GAME_RIGHT - radius - 3), runtimeLayout.DROP_Y + radius, {});
     readyToDrop = false;
     playPlayerAttackEffect(DROP_DAMAGE, 'drop');
     currentLevel = null;
@@ -504,15 +599,22 @@
       second.mergedInto = true;
       const x = (first.body.position.x + second.body.position.x) / 2;
       const y = (first.body.position.y + second.body.position.y) / 2;
+      const mergeLayout = runtimeLayout;
       const next = first.level + 1;
-      schedule(() => mergeMelanin(first, second, next, x, y), MERGE_DELAY);
+      schedule(() => mergeMelanin(first, second, next, x, y, mergeLayout), MERGE_DELAY);
     }
   }
 
-  function mergeMelanin(first, second, nextLevelValue, x, y) {
+  function mergeMelanin(first, second, nextLevelValue, x, y, sourceLayout = runtimeLayout) {
     if (!entities.has(first.body.id) || !entities.has(second.body.id)) return;
+    if (sourceLayout !== runtimeLayout) {
+      const mappedPoint = mapGamePoint({ x, y }, sourceLayout, runtimeLayout);
+      x = mappedPoint.x;
+      y = mappedPoint.y;
+      sourceLayout = runtimeLayout;
+    }
     if (gamePaused) {
-      if (combat.isBossTransitioning || activeEndState === 'victory') deferredPausedMerges.push([first, second, nextLevelValue, x, y]);
+      if (combat.isBossTransitioning || activeEndState === 'victory') deferredPausedMerges.push([first, second, nextLevelValue, x, y, sourceLayout]);
       return;
     }
     const dangerBornAt = Math.min(first.dangerBornAt, second.dangerBornAt);
@@ -521,8 +623,8 @@
     wakeAllMelaninBodies();
     registerCombo();
     const radius = ballSizeManager.getScaledRadius(nextLevelValue);
-    const safeX = clamp(x, GAME_LEFT + radius + 2, GAME_RIGHT - radius - 2);
-    const safeY = clamp(y, GAME_TOP + radius + 4, GAME_FLOOR - radius - 4);
+    const safeX = clamp(x, runtimeLayout.GAME_LEFT + radius + 2, runtimeLayout.GAME_RIGHT - radius - 2);
+    const safeY = clamp(y, runtimeLayout.GAME_TOP + radius + 4, runtimeLayout.GAME_FLOOR - radius - 4);
     const damage = calculateMergeDamage(first.level, nextLevelValue);
     playPlayerAttackEffect(damage, 'merge');
     if (nextLevelValue === MAX_LEVEL) {
@@ -996,8 +1098,8 @@
     nextLevel = randomDropLevel();
     isPointerInsidePlayfield = false;
     resetPointerGesture();
-    lastValidDropX = PLAYFIELD_CENTER_X;
-    currentDropX = PLAYFIELD_CENTER_X;
+    lastValidDropX = runtimeLayout.PLAYFIELD_CENTER_X;
+    currentDropX = runtimeLayout.PLAYFIELD_CENTER_X;
     readyToDrop = true;
     activeSkill = null;
     ddmBusy = false;
@@ -1027,7 +1129,7 @@
     const targetName = event.target?.tagName;
     if (targetName === 'INPUT' || targetName === 'TEXTAREA' || event.target?.isContentEditable) return;
     if (event.key.toLowerCase() === 'r') { restartGame(); return; }
-    if (gamePaused) return;
+    if (gamePaused || presentationLandscape) return;
     if (event.key.toLowerCase() === 'g') { triggerGameOver(); return; }
     if (event.key.toLowerCase() === 'd') {
       const gainedDdm = addSkillUses('ddm');
@@ -1041,14 +1143,14 @@
   }
 
   function debugSpawn(level) {
-    if (gamePaused) return;
+    if (gamePaused || presentationLandscape) return;
     const radius = ballSizeManager.getScaledRadius(level);
     let spawnX = currentDropX;
     if (!isPointerInsidePlayfield) {
-      spawnX = LOGICAL_WIDTH / 2 + debugSide * Math.min(radius * 0.62, 52);
+      spawnX = runtimeLayout.LOGICAL_WIDTH / 2 + debugSide * Math.min(radius * 0.62, runtimeLayout.PLAYFIELD_WIDTH * .11);
       debugSide *= -1;
     }
-    const entity = createMelanin(level, clamp(spawnX, GAME_LEFT + radius + 4, GAME_RIGHT - radius - 4), Math.round(LOGICAL_HEIGHT * LAYOUT.debugSpawnY));
+    const entity = createMelanin(level, clamp(spawnX, runtimeLayout.GAME_LEFT + radius + 4, runtimeLayout.GAME_RIGHT - radius - 4), Math.round(runtimeLayout.LOGICAL_HEIGHT * runtimeLayout.LAYOUT.debugSpawnY));
     entity.dangerBornAt = gameTime - 1500;
     showToast(`Lv ${level} DDM 精華`, 900);
   }
@@ -1062,19 +1164,19 @@
     updateDangerLineGeometry(uiScale);
     const deviceRatio = window.devicePixelRatio || 1;
     const renderScale = Math.max(1, Math.min(MAX_CANVAS_SCALE, deviceRatio * uiScale));
-    canvas.width = Math.round(LOGICAL_WIDTH * renderScale);
-    canvas.height = Math.round(LOGICAL_HEIGHT * renderScale);
+    canvas.width = Math.round(runtimeLayout.LOGICAL_WIDTH * renderScale);
+    canvas.height = Math.round(runtimeLayout.LOGICAL_HEIGHT * renderScale);
     ctx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
     renderer.resizeNextPreview();
     updateCombatLayout(getLayoutMetrics());
-    // Matter.js stays in the normalized reference frame; the 16:9 wrapper scales visuals and collisions together.
-    // Resizing only refreshes render metrics, so bodies, boss HP, DDM, and theme remain untouched.
+    // Resizing within a mode changes presentation scale only. Crossing modes updates the
+    // existing bodies and bowl walls in setRuntimeLayoutMode() without restarting the run.
   }
 
   function frame(now) {
     const delta = lastFrame ? Math.min(MAX_FRAME_DELTA, Math.max(0, now - lastFrame)) : PHYSICS_TIMESTEP;
     lastFrame = now;
-    if (!gamePaused) {
+    if (!gamePaused && !presentationLandscape) {
       gameTime += delta;
       physicsAccumulator += delta;
       let physicsSteps = 0;

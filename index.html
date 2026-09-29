@@ -7,7 +7,9 @@
   <meta name="description" content="合成 DDM 精華累積能量，由玩家角色討伐黑色素 Boss。">
   <title>DDM Essence Merge — Melanin Boss Battle</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23069f87'/%3E%3Ctext x='32' y='46' text-anchor='middle' font-size='42' fill='white'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
+  <script src="js/mobile.js"></script>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="mobile.css">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
   <script defer src="js/config.js"></script>
   <script defer src="js/themes.js"></script>
@@ -240,6 +242,13 @@
         <div class="theme-options" id="theme-options" role="group" aria-label="選擇精華的色系"></div>
       </aside>
     </section>
+    <div class="orientation-warning" id="orientation-warning" role="status" aria-live="polite" hidden>
+      <div class="orientation-warning-card">
+        <span aria-hidden="true">↻</span>
+        <strong>建議使用直向模式</strong>
+        <p>請將裝置轉回直向，讓遊戲與操作區完整顯示。</p>
+      </div>
+    </div>
   </main>
 </body>
 </html>
