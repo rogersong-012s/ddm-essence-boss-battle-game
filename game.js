@@ -87,6 +87,7 @@
     bossImageEl: bossCharacterImageEl,
     bossFallbackEl: bossCharacterFallbackEl,
     playerConfig: GAME_CONFIG.PLAYER_CONFIG,
+    fallbackDelayMs: GAME_CONFIG.CHARACTER_IMAGE_FALLBACK_DELAY_MS,
     text: UI_TEXT
   });
   const playerProgression = window.DDMGameProgression.createPlayerProgression(GAME_CONFIG, playerNameEl, UI_TEXT);
@@ -983,6 +984,7 @@
     canvas.classList.remove('ddm-selecting', 'ssw-selecting');
     cancelUnresolvedBossAttacks(impactEffect);
     updateSkillUI();
+    if (nextBoss) void characterVisuals.preloadBoss(nextBoss);
     showBossTransition(defeatedBoss, nextBoss, isFinalBoss);
 
     schedule(() => {
