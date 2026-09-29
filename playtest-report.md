@@ -1,4 +1,4 @@
-# Playtest Report (in progress)
+# Playtest Report
 
 Black-box playtest notes. No game files or settings have been changed. Test actions so far have used the visible game UI in the user-provided `http://localhost:8000/` tab.
 
@@ -6,10 +6,10 @@ Black-box playtest notes. No game files or settings have been changed. Test acti
 
 - Game tab: `DDM Essence Merge — Melanin Boss Battle` at `localhost:8000`.
 - Learning games L1–L4 were played before setting a viewport override; the available screenshot was 814 × 741, with the game scaled inside it. For L5 and the formal phase, the browser viewport was set to the requested 1600 × 900.
-- Inputs are ordinary visible clicks, paced about 2–3 seconds apart to observe settling and attacks. No debug controls, console, game functions, or state edits used.
-- User-requested phases: 5 learning games, then at least 20 formal games. All 5 learning games are complete; 20 formal games remain.
+- Inputs were ordinary visible clicks, with the earlier sessions generally paced about 2–3 seconds apart to observe settling and attacks. No debug controls, console, game functions, or state edits were used.
+- Original scope: 5 learning games, then at least 20 formal games. The user later narrowed the active request to three skilled-player runs on the current localhost build; those three runs are complete below. Earlier results remain as historical notes.
 
-## Learning phase (in progress)
+## Learning phase (completed)
 
 ### Game L1 — completed (learning)
 
@@ -57,7 +57,7 @@ Black-box playtest notes. No game files or settings have been changed. Test acti
 - The run generated a `COMBO ×5` burst while Boss HP fell from 5,175 to 4,545, a visible 630-point drop. Other chains also built Lv5, Lv6, Lv7, and Lv8 while the board remained manageable for a long stretch. Later small and mid-level balls accumulated along the left side; the danger line was eventually crossed and Game Over appeared with the Boss still at 3,785.
 - Play time: not precisely timed; no in-game timer was visible. Subjective difficulty: **7/10**. Deliberate same-level placement made the long chains satisfying, but the Boss still had nearly half its health when the left-side pile ended the run.
 
-## Formal results
+## Historical formal results (beginner, earlier build)
 
 Formal target: at least 20 games (current tally: 5/20; 15 remain). The first five formal runs are assigned to the beginner group, followed by 10 regular and five skilled-player runs.
 
@@ -105,3 +105,32 @@ Formal target: at least 20 games (current tally: 5/20; 15 remain). The first fiv
 - Skills: DDM used on Lv4 for `−10 HP` and removed that sphere. SSW+1 upgraded Lv4 → Lv5 with no damage. Both counters reached 0; no MAX refill or player upgrade occurred.
 - Several planned same-lane matches produced long chains: `COMBO ×3` lowered HP by about 150, and later `COMBO ×4` lowered it by about 85. Another visible transition reduced HP from about 6,410 to 6,150. The board reached Lv7 and held two Lv6 spheres, but groups of small and mid-level balls filled the gaps and built a tall central/right pile; the next placement triggered Game Over.
 - No Continue, White Score, or victory flow was encountered. The game remained responsive. Difficulty: **7/10**; repeated targeting created more chains than earlier runs, but the Boss still had most of its health when board space ran out.
+
+## Revised scope: three skilled-player runs (completed)
+
+The user asked to play three runs using a skilled approach. No visible difficulty or “高手模式” selector was present, so I used deliberate same-level targeting through the visible game UI. These runs used a newer/different localhost build than the earlier 8,000-HP single-Boss runs: Boss A had 3,000 HP, Boss B 5,000 HP, and Boss C 8,000 HP. The browser view was 814 × 741, so these results should not be compared directly with the earlier 1600 × 900 sessions. This is a three-run sample.
+
+### Skilled run H1 — completed
+
+- Boss A was defeated. Game Over occurred on Boss B with **4,820 / 5,000 HP remaining**. Highest level: **Lv7**; DDM Guard remained **+0**.
+- DDM showed `−40 HP` on a Lv6 ball. SSW+1 upgraded Lv3 → Lv4, which then merged to Lv5. No MAX merge or skill refill occurred.
+- The run cleared the first Boss, but the board filled before meaningful damage was dealt to Boss B.
+
+### Skilled run H2 — completed
+
+- Bosses A and B were defeated. Game Over occurred on Boss C with **560 / 8,000 HP remaining**. Highest level: **Lv9 (MAX)**; DDM Guard reached **+2**.
+- A MAX merge produced a large damage burst and refilled skills. DDM displayed `−80 HP`; SSW+1 was used again after MAX refills. Both skills were exhausted by the end.
+- This was the strongest of the three runs and came close to clearing the full sequence, but Boss C survived.
+
+### Skilled run H3 — completed
+
+- Game Over occurred on Boss A with **110 / 3,000 HP remaining**. Highest level: **Lv6**; DDM Guard remained **+0**.
+- DDM showed `−40 HP` on a Lv6 ball. SSW+1 upgraded Lv3 → Lv4, then a merge produced Lv5. Both skills were spent before the end; no MAX merge or player upgrade was observed.
+- Visible `COMBO ×5` and `COMBO ×4` bursts helped reduce Boss HP, but the crowded board ended the run just before Boss A was defeated.
+
+### Three-run summary
+
+- Boss clears: **H1 cleared A; H2 cleared A and B; H3 cleared none.** No run completed the full sequence.
+- Highest levels were Lv7, Lv9 (MAX), and Lv6. Only H2 triggered a player upgrade, reaching Guard +2.
+- Deliberate targeting made the largest difference when it fed a MAX merge and replenished skills (H2). H1 dealt 180 damage to Boss B before losing; H3 came within 110 HP of defeating Boss A.
+- Because only three runs were played and the current build/viewport differ from earlier sessions, these outcomes are directional observations rather than a stable win-rate or balance estimate.

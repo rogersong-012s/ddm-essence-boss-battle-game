@@ -762,7 +762,7 @@
         ? combat.mode === 'whiteScore' ? 'WHITE MODE 不會補充 SSW+1' : 'MAX 合成可補充技能次數'
         : '選取一顆精華提升一級';
     maxRuleDescriptionEl.textContent = combat.mode === 'whiteScore'
-      ? 'WHITE MODE：MAX 合成只補充 DDM，不再補充 SSW+1。'
+      ? 'MAX 合成只補充 DDM，不再補充 SSW+1。'
       : '合成後精華會消除，並隨機補充 1 次技能。';
   }
 
