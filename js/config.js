@@ -91,7 +91,7 @@
   });
   const PLAYER_MAX_LEVEL = 10;
   const BALL_SIZE_REDUCTION_PER_PLAYER_LEVEL = 0.02;
-  const PLAYER_CONFIG = Object.freeze({ image: 'assets/characters/player/JF.png' });
+  const PLAYER_CONFIG = Object.freeze({ image: 'assets/characters/player/player.png' });
   const WHITE_SCORE_DROP_LEVELS = Object.freeze([1, 2, 3, 4, 5]);
   const BOSS_CONFIG = Object.freeze({
     bosses: Object.freeze([
